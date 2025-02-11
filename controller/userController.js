@@ -61,6 +61,8 @@ const getUserData = catchAsyncError(async (req, res, next) => {
             if (!userData) return next(new ErrorHandler("No user found for the given Id.", 404));
         } else {
             userData = await User.findAll();
+
+            if(!userData) return next(new ErrorHandler("No data found", 404));
         }
 
         res.status(200).json({
@@ -104,26 +106,33 @@ const editUserData = catchAsyncError(async (req, res, next) => {
 
     } catch (error) {
         console.error("Error details: ", error);
-        next(new ErrorHandler("Internal server error", 500))
+        next(new ErrorHandler("Internal server error", 500));
     }
 })
 
 
 // Disable the user (soft delete)
-const disableUser = catchAsyncError(async (req, res, next) => {
+const enableDisableUser = catchAsyncError(async (req, res, next) => {
     try {
         const { id } = req.params;
+        const {status} = req.body;
 
         // check id
-        if (!id) return next(new ErrorHandler("User Id is required.", 400));
+        if (!id) return next(new ErrorHandler("User Id is required", 400));
+        if (!status) return next(new ErrorHandler("Status code is required", 400));
 
         const user = await User.findByPk(id);
-
         if (!user) return next(new ErrorHandler("User not found", 404));
 
-        await user.update({
-            status: false,
-        });
+        if(status === 1){
+            await user.update({
+                status: false,
+            });
+        } else if(status === 2){
+            await user.update({
+                status: true,
+            });
+        };
 
         res.status(200).json({
             success: true,
@@ -138,7 +147,7 @@ const disableUser = catchAsyncError(async (req, res, next) => {
 });
 
 
-// Disable the user
+// delete user (Hard delete)
 const deleteUser = catchAsyncError(async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -166,4 +175,4 @@ const deleteUser = catchAsyncError(async (req, res, next) => {
 
 
 
-export { saveUserdata, getUserData, editUserData, disableUser, deleteUser };
+export { saveUserdata, getUserData, editUserData, enableDisableUser, deleteUser };
