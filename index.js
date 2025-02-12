@@ -7,6 +7,7 @@ import swaggerData from "./swagger.json" assert {type: "json"};
 // Route imports
 import userRoute from "./route/userRoute.js";
 import pageRoute from "./route/pageRoute.js";
+import roleRoute from "./route/roleRoute.js";
 
 
 const app = express();
@@ -21,6 +22,7 @@ app.use(express.json()); // Parse JSON bodies
 // Routes
 app.use("/api/users", userRoute);
 app.use("/api/pages", pageRoute);
+app.use("/api/role", roleRoute);
 
 // Api docs
 app.use('/api/docs', swaggerUI.serve, swaggerUI.setup(swaggerData));
