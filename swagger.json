@@ -723,71 +723,357 @@
                     }
                 }
             }
-        }
-    },
-    "components": {
-        "schemas": {
-            "User": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
+        },
+        "/role/save": {
+            "post": {
+                "summary": "Save role with permissions",
+                "description": "Creates a new role with associated permissions.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "p_rolename": {
+                                        "type": "string",
+                                        "example": "Admin"
+                                    },
+                                    "p_permission_data": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "page_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "permission_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            }
+                                        },
+                                        "example": [
+                                            {
+                                                "page_id": 1,
+                                                "permission_id": 1
+                                            },
+                                            {
+                                                "page_id": 2,
+                                                "permission_id": 2
+                                            }
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "p_rolename",
+                                    "p_permission_data"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Role with permissions created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Role with permission created successfully"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "example": {
+                                                "role_id": 1,
+                                                "role_name": "Admin",
+                                                "permissions": [
+                                                    {
+                                                        "page_id": 1,
+                                                        "permission_id": 1
+                                                    },
+                                                    {
+                                                        "page_id": 2,
+                                                        "permission_id": 2
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
-                    "username": {
-                        "type": "string",
-                        "example": "john_doe"
+                    "400": {
+                        "description": "Bad request - Missing required fields or invalid data"
                     },
-                    "email": {
-                        "type": "string",
-                        "example": "john.doe@example.com"
-                    },
-                    "phone": {
-                        "type": "string",
-                        "example": "1234567890"
-                    },
-                    "designation": {
-                        "type": "string",
-                        "example": "Software Engineer"
-                    },
-                    "department": {
-                        "type": "string",
-                        "example": "Engineering"
-                    },
-                    "status": {
-                        "type": "boolean",
-                        "example": true
+                    "500": {
+                        "description": "Internal server error"
                     }
                 }
-            },
-            "Page": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
+            }
+        },
+        "/role/update": {
+            "put": {
+                "summary": "Update role permissions",
+                "description": "Updates permissions for an existing role.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "p_role_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "p_permission_data": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "page_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "permission_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            }
+                                        },
+                                        "example": [
+                                            {
+                                                "page_id": 1,
+                                                "permission_id": 1
+                                            },
+                                            {
+                                                "page_id": 2,
+                                                "permission_id": 2
+                                            }
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "p_role_id",
+                                    "p_permission_data"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Role permissions updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Role permissions updated successfully"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "example": {
+                                                "role_id": 1,
+                                                "role_name": "Admin",
+                                                "permissions": [
+                                                    {
+                                                        "page_id": 1,
+                                                        "permission_id": 1
+                                                    },
+                                                    {
+                                                        "page_id": 2,
+                                                        "permission_id": 2
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
-                    "pagename": {
-                        "type": "string",
-                        "example": "Home Page"
+                    "400": {
+                        "description": "Bad request - Missing required fields or invalid data"
                     },
-                    "context": {
-                        "type": "string",
-                        "example": "This is the home page content."
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/role/view/{role_id}": {
+            "get": {
+                "summary": "View role permissions",
+                "description": "Retrieves permissions associated with a specific role.",
+                "parameters": [
+                    {
+                        "name": "role_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role permissions retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Role permissions retrieved successfully"
+                                        },
+                                        "role_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "role_name": {
+                                            "type": "string",
+                                            "example": "Admin"
+                                        },
+                                        "pages": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "page_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "page_name": {
+                                                        "type": "string",
+                                                        "example": "Home Page"
+                                                    },
+                                                    "page_context": {
+                                                        "type": "string",
+                                                        "example": "This is the home page content."
+                                                    },
+                                                    "permissions": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "permission_id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "permission_name": {
+                                                                    "type": "string",
+                                                                    "example": "Read"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
-                    "status": {
-                        "type": "boolean",
-                        "example": true
+                    "400": {
+                        "description": "Bad request - Invalid role ID"
                     },
-                    "createdAt": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2023-10-01T12:00:00Z"
+                    "404": {
+                        "description": "Role not found"
                     },
-                    "updatedAt": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2023-10-01T12:00:00Z"
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "User": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "integer",
+                            "example": 1
+                        },
+                        "username": {
+                            "type": "string",
+                            "example": "john_doe"
+                        },
+                        "email": {
+                            "type": "string",
+                            "example": "john.doe@example.com"
+                        },
+                        "phone": {
+                            "type": "string",
+                            "example": "1234567890"
+                        },
+                        "designation": {
+                            "type": "string",
+                            "example": "Software Engineer"
+                        },
+                        "department": {
+                            "type": "string",
+                            "example": "Engineering"
+                        },
+                        "status": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    }
+                },
+                "Page": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "integer",
+                            "example": 1
+                        },
+                        "pagename": {
+                            "type": "string",
+                            "example": "Home Page"
+                        },
+                        "context": {
+                            "type": "string",
+                            "example": "This is the home page content."
+                        },
+                        "status": {
+                            "type": "boolean",
+                            "example": true
+                        },
+                        "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2023-10-01T12:00:00Z"
+                        },
+                        "updatedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2023-10-01T12:00:00Z"
+                        }
                     }
                 }
             }
