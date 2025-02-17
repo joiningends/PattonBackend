@@ -1,26 +1,68 @@
-import { where } from "sequelize";
+import { sequelize } from "../config/connectDB.js";
 import { catchAsyncError } from "../middleware/catchAsyncErrorMiddleware.js";
-import { Client } from "../model/clientModel.js";
+// import { Client } from "../model/clientModel.js";
 import ErrorHandler from "../util/ErrorHandler.js";
 
 // Create a new client
-const createClient = catchAsyncError(async (req, res, next) => {
+// Save client data with other contacts
+const saveClientData = catchAsyncError(async (req, res, next) => {
     try {
-        const { name, email, phone, city, state, country, street_no, PAN_gst } = req.body;
+        const {
+            p_name,
+            p_email,
+            p_phone,
+            p_city,
+            p_state,
+            p_country,
+            p_street_no,
+            p_PAN_gst,
+            p_other_contacts
+        } = req.body;
 
-        if (!name || !email || !phone) return next(new ErrorHandler("Please provide all the required fields", 400));
+        // Validate required fields
+        if (!p_name || !p_email || !p_phone) {
+            return next(new ErrorHandler("Please fill all required fields", 400));
+        }
 
-        const emailExists = await Client.findOne({ where: { email } });
-        if (emailExists) return next(new ErrorHandler("Email already exists", 400));
+        // Call the PostgreSQL function
+        const result = await sequelize.query(
+            'SELECT save_client_data(:p_name, :p_email, :p_phone, :p_city, :p_state, :p_country, :p_street_no, :p_PAN_gst, :p_other_contacts)',
+            {
+                replacements: {
+                    p_name,
+                    p_email,
+                    p_phone,
+                    p_city: p_city || null,
+                    p_state: p_state || null,
+                    p_country: p_country || null,
+                    p_street_no: p_street_no || null,
+                    p_PAN_gst: p_PAN_gst || null,
+                    p_other_contacts: p_other_contacts ? JSON.stringify(p_other_contacts) : null
+                },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
 
-        const newClient = await Client.create({
-            name, email, phone, city, state, country, street_no, PAN_gst,
-            status: true,
+        // Get the function result
+        const functionResult = result[0]?.save_client_data;
+
+        if (!functionResult) {
+            return next(new ErrorHandler("Unexpected database response", 500));
+        }
+
+        // Check if the result contains an error message
+        if (functionResult.startsWith('Error:')) {
+            return next(new ErrorHandler(functionResult, 400));
+        }
+
+        res.status(200).json({
+            success: true,
+            message: functionResult,
+            data: result[0]
         });
 
-        res.status(201).json({ success: true, message: "Client created successfully", data: newClient });
     } catch (error) {
-        console.error("Error details:", error);
+        console.log("Error details: ", error);
         next(new ErrorHandler("Internal server error", 500));
     }
 });
@@ -95,4 +137,4 @@ const deleteClient = catchAsyncError(async (req, res, next) => {
     }
 });
 
-export { createClient, getClient, updateClient, disableClient, deleteClient };
+export { saveClientData, getClient, updateClient, disableClient, deleteClient };

@@ -104,32 +104,44 @@ const updateRolewithPermission = catchAsyncError(async (req, res, next) => {
 })
 
 
-
-// View role with permission
+// get role permission
 const viewRolePermissions = catchAsyncError(async (req, res, next) => {
     try {
-        const { role_id } = req.params;
+        let { role_id } = req.params;
 
-        // Validate role_id
-        if (!role_id || !Number.isInteger(parseInt(role_id))) {
-            return next(new ErrorHandler("Please provide a valid role ID", 400));
-        }
+        // Convert role_id to integer or set it to null for fetching all roles
+        role_id = role_id ? parseInt(role_id) : null;
 
-        // Call the stored procedure
+        // Call the function to get role permissions
         const result = await sequelize.query(
             'SELECT * FROM view_role_permissions(:role_id)',
             {
-                replacements: { role_id: parseInt(role_id) },
+                replacements: { role_id },
                 type: sequelize.QueryTypes.SELECT
             }
         );
 
-        // Transform the result into a more structured format
+        // If no records are found, handle accordingly
+        if (!result.length) {
+            return next(new ErrorHandler(role_id ? 
+                `No permissions found for role ID ${role_id}` : 
+                "No role permissions found", 404));
+        }
+
+        // Transform the result into a structured format
         const formattedResult = result.reduce((acc, curr) => {
+            const roleKey = curr.role_id;
+            if (!acc[roleKey]) {
+                acc[roleKey] = {
+                    role_id: curr.role_id,
+                    role_name: curr.role_name,
+                    pages: {}
+                };
+            }
+
             const pageKey = curr.page_id;
-            
-            if (!acc[pageKey]) {
-                acc[pageKey] = {
+            if (!acc[roleKey].pages[pageKey]) {
+                acc[roleKey].pages[pageKey] = {
                     page_id: curr.page_id,
                     page_name: curr.page_name,
                     page_context: curr.page_context,
@@ -137,7 +149,7 @@ const viewRolePermissions = catchAsyncError(async (req, res, next) => {
                 };
             }
 
-            acc[pageKey].permissions.push({
+            acc[roleKey].pages[pageKey].permissions.push({
                 permission_id: curr.permission_id,
                 permission_name: curr.permission_name
             });
@@ -145,25 +157,30 @@ const viewRolePermissions = catchAsyncError(async (req, res, next) => {
             return acc;
         }, {});
 
+        // Convert pages to an array for each role
+        const responseData = Object.values(formattedResult).map(role => ({
+            ...role,
+            pages: Object.values(role.pages)
+        }));
+
         res.status(200).json({
             success: true,
             message: "Role permissions retrieved successfully",
-            role_id: parseInt(role_id),
-            role_name: result[0]?.role_name,
-            pages: Object.values(formattedResult)
+            roles: responseData
         });
 
     } catch (error) {
-        console.log("Error details: ", error);
+        console.error("Error details: ", error);
         
-        // Check if it's a known error from the stored procedure
+        // Check if it's a known error from the function
         if (error.message.startsWith('Error:')) {
             return next(new ErrorHandler(error.message.substring(7), 400));
         }
-        
+
         next(new ErrorHandler("Internal server error", 500));
     }
 });
+
 
 
 

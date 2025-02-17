@@ -10,6 +10,7 @@ import cors from "cors"; // Import cors
 import userRoute from "./route/userRoute.js";
 import pageRoute from "./route/pageRoute.js";
 import roleRoute from "./route/roleRoute.js";
+import clientRoute from "./route/clientRoute.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -30,6 +31,7 @@ app.use(express.json()); // Parse JSON bodies
 app.use("/api/users", userRoute);
 app.use("/api/pages", pageRoute);
 app.use("/api/role", roleRoute);
+app.use("/api/client", clientRoute);
 
 // API docs
 app.use("/api/docs", swaggerUI.serve, swaggerUI.setup(swaggerData));
@@ -37,8 +39,9 @@ app.use("/api/docs", swaggerUI.serve, swaggerUI.setup(swaggerData));
 // Error middleware
 app.use(errorMiddleware);
 
+// Connect to DB
+connectdb();
+
 app.listen(port, () => {
   console.log(`✅ Server application is running at port: ${port}`);
 });
-
-connectdb();
