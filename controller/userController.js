@@ -3,6 +3,7 @@ import { catchAsyncError } from "../middleware/catchAsyncErrorMiddleware.js";
 import { User } from "../model/userModel.js";
 import ErrorHandler from "../util/ErrorHandler.js";
 import bcrypt from "bcryptjs";
+import { sequelize } from "../config/connectDB.js";
 
 
 // Saving the user details
@@ -175,4 +176,35 @@ const deleteUser = catchAsyncError(async (req, res, next) => {
 
 
 
-export { saveUserdata, getUserData, editUserData, enableDisableUser, deleteUser };
+// Map user with role
+const mapUserWithRole = catchAsyncError(async(req, res, next) => {
+    try{
+        const {p_user_id, p_role_id} = req.body;
+
+        if(!p_user_id || !p_role_id) return next(new ErrorHandler("Please provide the required fields", 400));
+        
+        // Calling the stored procedure
+        const result = await sequelize.query(
+            'CALL map_user_with_role(:p_user_id, :p_role_id)',
+            {
+                replacements: {
+                    p_user_id,
+                    p_role_id
+                }
+            }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "User mapped with provided role",
+        });
+
+    }catch(error){
+        console.error("Error details: ", error);
+        next(new ErrorHandler("Internal server error", 500));
+    }
+});
+
+
+
+export { saveUserdata, getUserData, editUserData, enableDisableUser, deleteUser, mapUserWithRole };

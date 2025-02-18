@@ -11,6 +11,7 @@ import userRoute from "./route/userRoute.js";
 import pageRoute from "./route/pageRoute.js";
 import roleRoute from "./route/roleRoute.js";
 import clientRoute from "./route/clientRoute.js";
+import rfqRoute from "./route/rfqRoute.js"
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -32,6 +33,7 @@ app.use("/api/users", userRoute);
 app.use("/api/pages", pageRoute);
 app.use("/api/role", roleRoute);
 app.use("/api/client", clientRoute);
+app.use("/api/rfq", rfqRoute);
 
 // API docs
 app.use("/api/docs", swaggerUI.serve, swaggerUI.setup(swaggerData));

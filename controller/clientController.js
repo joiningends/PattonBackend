@@ -3,7 +3,6 @@ import { catchAsyncError } from "../middleware/catchAsyncErrorMiddleware.js";
 // import { Client } from "../model/clientModel.js";
 import ErrorHandler from "../util/ErrorHandler.js";
 
-// Create a new client
 // Save client data with other contacts
 const saveClientData = catchAsyncError(async (req, res, next) => {
     try {
