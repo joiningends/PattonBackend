@@ -12,7 +12,7 @@ const saveRFQandSKUdata = catchAsyncError(async (req, res, next) => {
             return next(new ErrorHandler("Please provide all required fields", 400));
         }
 
-        // Call the PostgreSQL stored procedure
+        // Calling the stored procedure
         const result = await sequelize.query(
             'CALL insert_rfq_sku(:p_rfq_name, :p_user_id, :p_client_id, :p_skus)',
             {

@@ -122,6 +122,7 @@ const processClientResults = (results) => {
                 country: row.client_country,
                 street_no: row.client_street_no,
                 pan_gst: row.client_pan_gst,
+                status: row.client_status,
                 other_contacts: []
             });
         }

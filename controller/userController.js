@@ -54,23 +54,23 @@ const saveUserdata = catchAsyncError(async (req, res, next) => {
 const getUserData = catchAsyncError(async (req, res, next) => {
     try {
         const { id } = req.params;
-        let userData;
+        
+        // Call the function directly in a SELECT statement
+        const [result] = await sequelize.query(
+            'SELECT get_users(:userId) as data', 
+            {
+                replacements: { userId: id || null },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
 
-        if (id) {
-            userData = await User.findByPk(id);
+        const data = result.data;
 
-            if (!userData) return next(new ErrorHandler("No user found for the given Id.", 404));
-        } else {
-            userData = await User.findAll();
-
-            if(!userData) return next(new ErrorHandler("No data found", 404));
+        if (!data.success) {
+            return next(new ErrorHandler(data.message, 404));
         }
 
-        res.status(200).json({
-            success: true,
-            message: "User data fetched successfully",
-            data: userData,
-        });
+        res.status(200).json(data);
 
     } catch (error) {
         console.error("Error details: ", error);
