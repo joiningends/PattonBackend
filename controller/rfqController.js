@@ -36,4 +36,39 @@ const saveRFQandSKUdata = catchAsyncError(async (req, res, next) => {
 });
 
 
-export {saveRFQandSKUdata};
+
+
+const getRFQDetail = catchAsyncError(async (req, res, next) => {
+    try {
+        const { p_user_id, p_rfq_id, p_client_id } = req.body; // Get parameters from query string
+
+        // Query the function using raw SQL
+        const query = `SELECT * FROM get_rfq(:p_user_id, :p_rfq_id, :p_client_id);`;
+
+        const rfqData = await sequelize.query(query, {
+            replacements: {
+                p_user_id: p_user_id || null,
+                p_rfq_id: p_rfq_id || null,
+                p_client_id: p_client_id || null
+            },
+            type: sequelize.QueryTypes.SELECT,
+        });
+
+        if (!rfqData || rfqData.length === 0) {
+            return next(new ErrorHandler("No RFQ data found", 404));
+        }
+
+        res.status(200).json({
+            success: true,
+            data: rfqData, // Send the array of RFQ details
+        });
+    } catch (error) {
+        console.error("Error fetching RFQ details: ", error);
+        next(new ErrorHandler("Internal server error", 500));
+    }
+});
+
+
+
+
+export {saveRFQandSKUdata, getRFQDetail};
