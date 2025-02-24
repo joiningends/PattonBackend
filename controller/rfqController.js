@@ -14,20 +14,28 @@ const saveRFQandSKUdata = catchAsyncError(async (req, res, next) => {
 
         // Calling the stored procedure
         const result = await sequelize.query(
-            'CALL insert_rfq_sku(:p_rfq_name, :p_user_id, :p_client_id, :p_skus)',
+            'CALL insert_rfq_sku(:p_rfq_name, :p_user_id, :p_client_id, :p_skus, :p_rfq_id)',
             {
                 replacements: {
                     p_rfq_name,
                     p_user_id,
                     p_client_id,
-                    p_skus: JSON.stringify(p_skus)
-                }
+                    p_skus: JSON.stringify(p_skus),
+                    p_rfq_id: null 
+                },
+                type: sequelize.QueryTypes.RAW
             }
         );
+
+        console.log("result: ", result);
+
+        const rfqId = result[0][0]?.p_rfq_id;
+        console.log(rfqId);
 
         res.status(200).json({
             success: true,
             message: "RFQ and SKUs inserted successfully",
+            RFQ_id: rfqId
         });
     } catch (error) {
         console.error("Error details:", error);
