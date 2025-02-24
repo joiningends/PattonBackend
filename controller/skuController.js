@@ -1,14 +1,13 @@
 import { catchAsyncError } from "../middleware/catchAsyncErrorMiddleware.js";
 import ErrorHandler from "../util/ErrorHandler.js";
 import { sequelize } from "../config/connectDB.js";
-import { Sku } from "../model/skuModel.js";
 
 const getSKUbyRFQid = catchAsyncError(async (req, res, next) => {
     try {
         const { rfqId } = req.params;
         const { skuId } = req.query; // Get skuId from query params if provided
 
-        if(!rfqId) return next(new ErrorHandler("RFQ id is required.", 400));;
+        if (!rfqId) return next(new ErrorHandler("RFQ id is required.", 400));;
 
         // Query the function using raw SQL
         const query = skuId
@@ -35,16 +34,43 @@ const getSKUbyRFQid = catchAsyncError(async (req, res, next) => {
 });
 
 
+const getProductsBySKUId = catchAsyncError(async (req, res, next) => {
+    const { p_sku_id } = req.params;
+    const { p_product_id } = req.query;
 
-const saveProductswithSKUdetails = catchAsyncError(async(req, res, next) => {
-    try{
-        const {p_sku_id, p_products} = req.body;
+    if (!p_sku_id) return next(new ErrorHandler("SKU id is required", 400));
+
+    const query = p_product_id
+        ? `SELECT * FROM get_product_by_skuID(:p_sku_id, :p_product_id);`
+        : `SELECT * FROM get_product_by_skuID(:p_sku_id, NULL);`;
+
+    const productData = await sequelize.query(query, {
+        replacements: { p_sku_id, p_product_id },
+        type: sequelize.QueryTypes.SELECT,
+    });
+
+    if(!productData || productData.length === 0) {
+        return next(new ErrorHandler("No products found for the given SKU ID", 404));
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Product fetched by given SKU id",
+        data: productData,
+    });
+})
+
+
+
+const saveProductswithSKUdetails = catchAsyncError(async (req, res, next) => {
+    try {
+        const { p_sku_id, p_products } = req.body;
 
         // Check for SKU ID
-        if(!p_sku_id) return next(new ErrorHandler("Please provide the SKU ID", 400));
+        if (!p_sku_id) return next(new ErrorHandler("Please provide the SKU ID", 400));
 
         // Check for products array
-        if(!Array.isArray(p_products) || p_products.length === 0){
+        if (!Array.isArray(p_products) || p_products.length === 0) {
             return next(new ErrorHandler("Products must be a non-empty array", 400));
         }
 
@@ -53,10 +79,10 @@ const saveProductswithSKUdetails = catchAsyncError(async(req, res, next) => {
             `CALL insert_product_with_sku_details(:p_sku_id, :p_products)`,
             {
                 replacements: {
-                    p_sku_id, 
+                    p_sku_id,
                     p_products: p_products ? JSON.stringify(p_products) : null
                 },
-                type: sequelize.QueryTypes.SELECT   
+                type: sequelize.QueryTypes.SELECT
             }
         );
 
@@ -65,7 +91,7 @@ const saveProductswithSKUdetails = catchAsyncError(async(req, res, next) => {
             message: "Products inserted successfully with SKU details.",
         });
 
-    }catch(error){
+    } catch (error) {
         console.error("Error details: ", error);
         next(new ErrorHandler("Internal server error", 500));
     }
@@ -73,4 +99,7 @@ const saveProductswithSKUdetails = catchAsyncError(async(req, res, next) => {
 
 
 
-export {getSKUbyRFQid, saveProductswithSKUdetails};
+
+
+
+export { getSKUbyRFQid, saveProductswithSKUdetails, getProductsBySKUId };
