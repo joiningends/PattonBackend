@@ -13,6 +13,7 @@ import roleRoute from "./route/roleRoute.js";
 import clientRoute from "./route/clientRoute.js";
 import rfqRoute from "./route/rfqRoute.js";
 import skuRoute from "./route/skuRoute.js";
+import rawMaterialRoute from "./route/rawMaterialRoute.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -36,6 +37,7 @@ app.use("/api/role", roleRoute);
 app.use("/api/client", clientRoute);
 app.use("/api/rfq", rfqRoute);
 app.use("/api/sku", skuRoute);
+app.use("/api/rawmaterial", rawMaterialRoute);
 
 // API docs
 app.use("/api/docs", swaggerUI.serve, swaggerUI.setup(swaggerData));
