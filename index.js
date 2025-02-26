@@ -14,6 +14,7 @@ import clientRoute from "./route/clientRoute.js";
 import rfqRoute from "./route/rfqRoute.js";
 import skuRoute from "./route/skuRoute.js";
 import rawMaterialRoute from "./route/rawMaterialRoute.js";
+import plantRoute from "./route/plantRoute.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -38,6 +39,7 @@ app.use("/api/client", clientRoute);
 app.use("/api/rfq", rfqRoute);
 app.use("/api/sku", skuRoute);
 app.use("/api/rawmaterial", rawMaterialRoute);
+app.use("/api/plant", plantRoute);
 
 // API docs
 app.use("/api/docs", swaggerUI.serve, swaggerUI.setup(swaggerData));

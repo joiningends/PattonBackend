@@ -63,6 +63,8 @@ const getRFQDetail = catchAsyncError(async (req, res, next) => {
         // Query the function using raw SQL
         const query = `SELECT * FROM get_rfq(:p_user_id, :p_rfq_id, :p_client_id);`;
 
+        console.log("RFQ_ID: ", p_rfq_id);
+
         const rfqData = await sequelize.query(query, {
             replacements: {
                 p_user_id: p_user_id || null,
@@ -422,5 +424,63 @@ const deleteRFQDocumentPermanently = catchAsyncError(async (req, res, next) => {
 
 
 
+// Approve rfq and send to plant
+const approveOrRejectRFQ = catchAsyncError(async (req, res, next) => {
+    try {
+        const { rfq_id, user_id, state_id, plant_id, comments } = req.body;
 
-export { saveRFQandSKUdata, getRFQDetail, uploadRFQDocuments, getRFQDocuments, downloadRFQDocument, deleteRFQDocument, deleteRFQDocumentPermanently };
+        // Validate required fields
+        if (!rfq_id || !user_id || state_id === undefined) {
+            return next(new ErrorHandler("Please provide all required fields", 400));
+        }
+
+        // Validate state_id and corresponding parameters
+        if (state_id === 2 && !plant_id) {
+            return next(new ErrorHandler("Plant ID is required when approving an RFQ", 400));
+        }
+
+        if (state_id === 0 && !comments) {
+            return next(new ErrorHandler("Comments are required when rejecting an RFQ", 400));
+        }
+
+        // Calling the stored procedure
+        await sequelize.query(
+            'CALL approve_rfq_send_plant(:p_rfq_id, :p_user_id, :p_state_id, :p_plant_id, :p_comments)',
+            {
+                replacements: {
+                    p_rfq_id: rfq_id,
+                    p_user_id: user_id,
+                    p_state_id: state_id,
+                    p_plant_id: plant_id,
+                    p_comments: comments
+                },
+                type: sequelize.QueryTypes.RAW
+            }
+        );
+
+        // Prepare response message based on action
+        const actionMessage = state_id === 2 ? "approved and assigned to plant" : "rejected";
+
+        res.status(200).json({
+            success: true,
+            message: `RFQ ${actionMessage} successfully`,
+            rfq_id: rfq_id
+        });
+    } catch (error) {
+        console.error("Error details:", error);
+        
+        // Check for specific PostgreSQL error messages and provide better error handling
+        if (error.message && error.message.includes("does not exist or is inactive")) {
+            return next(new ErrorHandler(error.message, 404));
+        }
+        
+        if (error.message && error.message.includes("Invalid parameters")) {
+            return next(new ErrorHandler(error.message, 400));
+        }
+        
+        next(new ErrorHandler("Internal server error", 500));
+    }
+});
+
+
+export { saveRFQandSKUdata, getRFQDetail, uploadRFQDocuments, getRFQDocuments, downloadRFQDocument, deleteRFQDocument, deleteRFQDocumentPermanently, approveOrRejectRFQ };

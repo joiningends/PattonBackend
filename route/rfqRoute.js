@@ -1,5 +1,5 @@
 import express from "express";
-import { deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDocuments, saveRFQandSKUdata, uploadRFQDocuments } from "../controller/rfqController.js";
+import { approveOrRejectRFQ, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDocuments, saveRFQandSKUdata, uploadRFQDocuments } from "../controller/rfqController.js";
 
 const router = express.Router();
 
@@ -12,5 +12,8 @@ router.get("/:rfqId/documents", getRFQDocuments);
 router.get("/:documentId/download", downloadRFQDocument);
 router.delete("/:documentId/docdelete", deleteRFQDocument);
 router.delete("/:documentId/docdelete/permanent", deleteRFQDocumentPermanently);
+
+// Approve RFQ and assign to plant
+router.post("/approve", approveOrRejectRFQ);
 
 export default router;
