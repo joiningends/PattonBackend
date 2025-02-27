@@ -425,6 +425,7 @@ const deleteRFQDocumentPermanently = catchAsyncError(async (req, res, next) => {
 
 
 // Approve rfq and send to plant
+// Approve rfq and send to plant
 const approveOrRejectRFQ = catchAsyncError(async (req, res, next) => {
     try {
         const { rfq_id, user_id, state_id, plant_id, comments } = req.body;
@@ -459,7 +460,11 @@ const approveOrRejectRFQ = catchAsyncError(async (req, res, next) => {
         );
 
         // Prepare response message based on action
-        const actionMessage = state_id === 2 ? "approved and assigned to plant" : "rejected";
+        const actionMessage = state_id === 2 
+            ? comments 
+                ? "approved with comments and assigned to plant" 
+                : "approved and assigned to plant"
+            : "rejected";
 
         res.status(200).json({
             success: true,
