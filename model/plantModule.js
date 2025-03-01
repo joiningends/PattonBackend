@@ -21,6 +21,26 @@ export const Plant = sequelize.define("Plant", {
         type: DataTypes.INTEGER,
         allowNull: true
     },
+    address1: {
+        type: DataTypes.STRING(655),
+        allowNull: true
+    },
+    address2: {
+        type: DataTypes.STRING(655),
+        allowNull: true
+    },
+    city: {
+        type: DataTypes.STRING(655),
+        allowNull: true
+    },
+    state: {
+        type: DataTypes.STRING(655),
+        allowNull: true
+    },
+    pincode: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    },
     status: {
         type: DataTypes.BOOLEAN,
         defaultValue: true
