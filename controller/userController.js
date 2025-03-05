@@ -4,15 +4,28 @@ import { User } from "../model/userModel.js";
 import ErrorHandler from "../util/ErrorHandler.js";
 import bcrypt from "bcryptjs";
 import { sequelize } from "../config/connectDB.js";
+import crypto from "crypto";
+import { Verification } from "../model/emailVerificationModel.js";
+import nodemailer from "nodemailer";
+import { sendEmailVerification } from "./emailController.js";
+
+
+// Generate random numbers
+function generateVerificationCode(length) {
+    const max = 10 ** (length || 6);
+    const randomBuffer = crypto.randomBytes(4);
+    const randomNumber = randomBuffer.readUInt32BE(0) % max;
+    return randomNumber.toString().padStart(length, '0');
+}
 
 
 // Saving the user details
 const saveUserdata = catchAsyncError(async (req, res, next) => {
     try {
-        const { username, email, password, phone, designation, department } = req.body;
+        const { username, email, phone, designation, department } = req.body;
 
         // check required fields
-        if (!username || !email || !password || !phone) return next(new ErrorHandler("Please provide all the required fields", 400));
+        if (!username || !email || !phone) return next(new ErrorHandler("Please provide all the required fields", 400));
 
         const emailExists = await User.findOne({
             where: {
@@ -23,23 +36,39 @@ const saveUserdata = catchAsyncError(async (req, res, next) => {
         if (emailExists) return next(new ErrorHandler("Email already exists", 400));
 
         // hash the password
-        const salt = await bcrypt.genSalt(10);
-        const hashPassword = await bcrypt.hash(password, salt);
+        // const salt = await bcrypt.genSalt(10);
+        // const hashPassword = await bcrypt.hash(password, salt);
 
 
         const newUser = await User.create({
             username: username,
             email: email,
-            password: hashPassword,
+            // password: hashPassword,
             phone: phone,
             designation: designation,
             department: department,
             status: true,
+            isEmailVerified: false
         });
+
+
+        // Set default role for the user
+        const p_user_id = newUser.id;
+        const p_role_id = 14;           // default user role
+
+        await sequelize.query(
+            'CALL map_user_with_role(:p_user_id, :p_role_id)',
+            {
+                replacements: {
+                    p_user_id,
+                    p_role_id
+                }
+            }
+        );
 
         res.status(201).json({
             success: true,
-            message: "User created successfully",
+            message: "User created and saved successfully.",
             data: newUser
         })
 
@@ -50,14 +79,97 @@ const saveUserdata = catchAsyncError(async (req, res, next) => {
 });
 
 
+
+const sendEmailVerificationMail = catchAsyncError(async (req, res, next) => {
+    const { userId } = req.query
+
+    if (!userId) return next(new ErrorHandler("Please provide user id.", 400));
+
+    const userDetails = await User.findByPk(userId);
+
+    if(!userDetails) return next(new ErrorHandler("User not found.", 404));
+
+    //  generate the email verification code
+    const verificationCode = generateVerificationCode(7);
+    console.log(verificationCode);
+
+    // Save the verification with userId in DB
+    await Verification.create({
+        userId: userId,
+        code: verificationCode,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+
+
+    // Create verification url
+    const verificationURL = `${process.env.CLIENT_URL}/verify-email?code=${verificationCode}`
+
+    // email subject
+    const subject = 'Verify your email';
+
+    // emial contents
+    const emailContent = `<p>Hello ${userDetails.username},</p>
+                              <p>Please verify your email by clicking on the link below:</p>
+                              <a href="${verificationURL}">Verify Email</a>
+                              <p>Or</p>
+                              <p>Use the code below to verify : </p>
+                              <h4>${verificationCode}</h4>`
+
+    // email credentials
+    const user = process.env.EMAIL_USER;
+    const pass = process.env.EMAIL_PASSWORD;
+
+    await sendEmailVerification(user, pass, userDetails.email, subject, emailContent);
+
+    res.status(201).json({
+        success: true,
+        message: "Verification email sent. Please verify your email to complete registration.",
+        data: userDetails
+    })
+})
+
+
+// Verify email
+const verifyEmail = catchAsyncError(async (req, res, next) => {
+    const { userId, code } = req.query;
+
+    if (!code) return next(new ErrorHandler("Verification code is required.", 400));
+
+    const verification = await Verification.findOne({
+        where: {
+            userId: userId,
+            code: code
+        }
+    });
+
+    if (!verification) return next(new ErrorHandler("Invalid or expired verification code", 404));
+
+    if (verification.expiresAt < new Date()) return next(new ErrorHandler("Verification code has expired", 400));
+
+    // Update the user to verified
+    await User.update(
+        { status: true },
+        { where: { id: userId } }
+    );
+
+    // remove the verification record
+    await Verification.destroy({ where: { code } });
+
+    res.status(200).json({
+        success: true,
+        message: "Email verified successfully, You can now login.",
+    });
+});
+
+
 // Get the users
 const getUserData = catchAsyncError(async (req, res, next) => {
     try {
         const { id } = req.params;
-        
+
         // Call the function directly in a SELECT statement
         const [result] = await sequelize.query(
-            'SELECT get_users(:userId) as data', 
+            'SELECT get_users(:userId) as data',
             {
                 replacements: { userId: id || null },
                 type: sequelize.QueryTypes.SELECT
@@ -116,7 +228,7 @@ const editUserData = catchAsyncError(async (req, res, next) => {
 const enableDisableUser = catchAsyncError(async (req, res, next) => {
     try {
         const { id } = req.params;
-        const {status} = req.body;
+        const { status } = req.body;
 
         // check id
         if (!id) return next(new ErrorHandler("User Id is required", 400));
@@ -125,11 +237,11 @@ const enableDisableUser = catchAsyncError(async (req, res, next) => {
         const user = await User.findByPk(id);
         if (!user) return next(new ErrorHandler("User not found", 404));
 
-        if(status === 1){
+        if (status === 1) {
             await user.update({
                 status: false,
             });
-        } else if(status === 2){
+        } else if (status === 2) {
             await user.update({
                 status: true,
             });
@@ -177,12 +289,12 @@ const deleteUser = catchAsyncError(async (req, res, next) => {
 
 
 // Map user with role
-const mapUserWithRole = catchAsyncError(async(req, res, next) => {
-    try{
-        const {p_user_id, p_role_id} = req.body;
+const mapUserWithRole = catchAsyncError(async (req, res, next) => {
+    try {
+        const { p_user_id, p_role_id } = req.body;
 
-        if(!p_user_id || !p_role_id) return next(new ErrorHandler("Please provide the required fields", 400));
-        
+        if (!p_user_id || !p_role_id) return next(new ErrorHandler("Please provide the required fields", 400));
+
         // Calling the stored procedure
         const result = await sequelize.query(
             'CALL map_user_with_role(:p_user_id, :p_role_id)',
@@ -199,7 +311,7 @@ const mapUserWithRole = catchAsyncError(async(req, res, next) => {
             message: "User mapped with provided role",
         });
 
-    }catch(error){
+    } catch (error) {
         console.error("Error details: ", error);
         next(new ErrorHandler("Internal server error", 500));
     }
@@ -207,4 +319,4 @@ const mapUserWithRole = catchAsyncError(async(req, res, next) => {
 
 
 
-export { saveUserdata, getUserData, editUserData, enableDisableUser, deleteUser, mapUserWithRole };
+export { saveUserdata, getUserData, editUserData, enableDisableUser, deleteUser, mapUserWithRole, verifyEmail, sendEmailVerificationMail };
