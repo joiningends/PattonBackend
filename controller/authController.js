@@ -24,7 +24,7 @@ const LoginUser = catchAsyncError(async (req, res, next) => {
     if (!userDetails) return next(new ErrorHandler("Wrong email address or password.", 404));
 
     // verify password
-    const isPasswordCorrect = bcrypt.compare(password, userDetails.password);
+    const isPasswordCorrect = await bcrypt.compare(password, userDetails.password);
 
     if (!isPasswordCorrect) return next(new ErrorHandler("Wrong email address or password.", 404));
 
@@ -181,7 +181,7 @@ const resetPassword = catchAsyncError(async (req, res, next) => {
 
     if (userDetails.password !== null) {
         // verify password
-        const isPasswordSame = bcrypt.compare(newPassword, userDetails.password);
+        const isPasswordSame = await bcrypt.compare(newPassword, userDetails.password);
 
         if (isPasswordSame) return next(new ErrorHandler("Please use different password than the previous.", 400));
     }

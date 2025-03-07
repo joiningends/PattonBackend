@@ -1,3 +1,4 @@
+import { sequelize } from "../config/connectDB.js";
 import { catchAsyncError } from "../middleware/catchAsyncErrorMiddleware.js";
 import { Plant } from "../model/plantModule.js";
 import ErrorHandler from "../util/ErrorHandler.js";
@@ -44,17 +45,14 @@ const savePlantData = catchAsyncError(async (req, res, next) => {
 const getPlantData = catchAsyncError(async (req, res, next) => {
     const { id } = req.params;
 
-    let plantData;
 
-    if (id) {
-        plantData = await Plant.findByPk(id);
+    const query = id ? `SELECT * FROM get_plants(:p_plant_id);` : `SELECT * FROM get_plants();`
 
-        if (!plantData) return next(new ErrorHandler("No plant data found for the given id", 404));
-    } else {
-        plantData = await Plant.findAll();
+    const plantData = await sequelize.query(query, {
+        replacements: {p_plant_id: id}
+    });
 
-        if (!plantData) return next(new ErrorHandler("No plant found", 404));
-    }
+    if(!plantData) return next(new ErrorHandler("No plant data found", 404));
 
     res.status(200).json({
         success: true,

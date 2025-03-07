@@ -22,7 +22,7 @@ function generateVerificationCode(length) {
 // Saving the user details
 const saveUserdata = catchAsyncError(async (req, res, next) => {
     try {
-        const { username, email, phone, designation, department } = req.body;
+        const { username, first_name, last_name, email, phone, designation, department } = req.body;
 
         // check required fields
         if (!username || !email || !phone) return next(new ErrorHandler("Please provide all the required fields", 400));
@@ -42,6 +42,8 @@ const saveUserdata = catchAsyncError(async (req, res, next) => {
 
         const newUser = await User.create({
             username: username,
+            first_name: first_name,
+            last_name: last_name,
             email: email,
             // password: hashPassword,
             phone: phone,
