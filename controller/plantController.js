@@ -65,7 +65,9 @@ const getPlantData = catchAsyncError(async (req, res, next) => {
 // Update the plant data
 const editPlant = catchAsyncError(async (req, res, next) => {
     const { id } = req.params;
-    const { plantname, plant_head, plant_engineer, address1, address2, city, state, pincode, status } = req.body;
+    const { plantname, plant_head, plant_head_id, plant_engineer, plant_engineer_id, address1, address2, city, state, pincode, status } = req.body;
+
+    console.log(plant_head, plant_engineer);
 
     if (!id) return next(new ErrorHandler("Plant id is required", 400));
 
@@ -74,8 +76,8 @@ const editPlant = catchAsyncError(async (req, res, next) => {
 
     const plant = await plantData.update({
         plantname: plantname || plantData.plantname,
-        plant_head: plant_head || plantData.plant_head,
-        plant_engineer: plant_engineer || plantData.plant_engineer,
+        plant_head: plant_head_id || plantData.plant_head,
+        plant_engineer: plant_engineer_id || plantData.plant_engineer,
         status: status || plantData.status,
         address1: address1 || plantData.address1,
         address2: address2 || plantData.address2,

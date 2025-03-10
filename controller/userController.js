@@ -89,7 +89,7 @@ const sendEmailVerificationMail = catchAsyncError(async (req, res, next) => {
 
     const userDetails = await User.findByPk(userId);
 
-    if(!userDetails) return next(new ErrorHandler("User not found.", 404));
+    if (!userDetails) return next(new ErrorHandler("User not found.", 404));
 
     //  generate the email verification code
     const verificationCode = generateVerificationCode(7);
@@ -191,6 +191,36 @@ const getUserData = catchAsyncError(async (req, res, next) => {
         next(new ErrorHandler("Internal server error", 500));
     }
 });
+
+
+
+const getUserRoleDataByUserId = catchAsyncError(async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!id) return next(new ErrorHandler("User id is required.", 400));
+
+    const userData = await User.findByPk(id);
+    if (!userData) return next(new ErrorHandler("User not found.", 404));
+
+    const userRoleData = await sequelize.query(
+        'SELECT * FROM public.get_user_role(:id)',
+        {
+            replacements: { id },
+            type: sequelize.QueryTypes.SELECT
+        }
+    );
+
+    if (!userRoleData.length) {
+        return next(new ErrorHandler("No user with role data found.", 404));
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "User role data fetched successfully",
+        data: userRoleData
+    });
+})
+
 
 
 // Edit the users
@@ -321,4 +351,14 @@ const mapUserWithRole = catchAsyncError(async (req, res, next) => {
 
 
 
-export { saveUserdata, getUserData, editUserData, enableDisableUser, deleteUser, mapUserWithRole, verifyEmail, sendEmailVerificationMail };
+export {
+    saveUserdata,
+    getUserData,
+    editUserData,
+    enableDisableUser,
+    deleteUser,
+    mapUserWithRole,
+    verifyEmail,
+    sendEmailVerificationMail,
+    getUserRoleDataByUserId
+};

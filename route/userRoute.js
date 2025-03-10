@@ -1,5 +1,5 @@
 import express from "express";
-import { saveUserdata, getUserData, editUserData, enableDisableUser, deleteUser, mapUserWithRole, verifyEmail, sendEmailVerificationMail } from "../controller/userController.js";
+import { saveUserdata, getUserData, editUserData, enableDisableUser, deleteUser, mapUserWithRole, verifyEmail, sendEmailVerificationMail, getUserRoleDataByUserId } from "../controller/userController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -13,6 +13,7 @@ router.get("/delete/:id", deleteUser);                  // delete user by Id
 router.post("/map", mapUserWithRole);                   // map user with role
 router.get("/verify/email", verifyEmail);               // verify email
 router.get("/send-email/verification", sendEmailVerificationMail);      // send email verification
+router.get("/userRoledata/:id", getUserRoleDataByUserId);
 router.get("/:id", getUserData);                        // fecth user by Id
 
 export default router; 

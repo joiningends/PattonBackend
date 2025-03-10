@@ -17,10 +17,10 @@ export const RawMaterial = sequelize.define("RawMaterial", {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false
     },
-    quantity_per_assembly: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false
-    },
+    // quantity_per_assembly: {
+    //     type: DataTypes.DECIMAL(10, 2),
+    //     allowNull: true
+    // },
     scrap_rate: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false

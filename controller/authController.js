@@ -28,6 +28,8 @@ const LoginUser = catchAsyncError(async (req, res, next) => {
 
     if (!isPasswordCorrect) return next(new ErrorHandler("Wrong email address or password.", 404));
 
+    if(userDetails.status === false) return next(new ErrorHandler("User has been made Inactive. Please contact the Admin", 400));
+
     // fetch roles
     const userRole = await sequelize.query(
         'CALL public.getUserRole(:p_user_id, null, null)',

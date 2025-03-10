@@ -4,9 +4,9 @@ import ErrorHandler from "../util/ErrorHandler.js";
 
 
 const saveRawmaterial = catchAsyncError(async (req, res, next) => {
-    const { raw_material_name, raw_material_rate, quantity_per_assembly, scrap_rate } = req.body;
+    const { raw_material_name, raw_material_rate, scrap_rate } = req.body;
 
-    if (!raw_material_name || !raw_material_rate || !quantity_per_assembly || !scrap_rate) return next(new ErrorHandler("Plaese provide all the required fields.", 400));
+    if (!raw_material_name || !raw_material_rate || !scrap_rate) return next(new ErrorHandler("Plaese provide all the required fields.", 400));
 
     const rawMaterialData = await RawMaterial.findOne({
         where: {
@@ -19,7 +19,6 @@ const saveRawmaterial = catchAsyncError(async (req, res, next) => {
     const newRawMaterial = await RawMaterial.create({
         raw_material_name: raw_material_name,
         raw_material_rate: raw_material_rate,
-        quantity_per_assembly: quantity_per_assembly,
         scrap_rate: scrap_rate,
         status: true
     });
@@ -55,7 +54,7 @@ const getRawMaterial = catchAsyncError(async (req, res, next) => {
 
 const editRawMaterial = catchAsyncError(async (req, res, next) => {
     const { id } = req.params;
-    const { raw_material_name, raw_material_rate, quantity_per_assembly, scrap_rate } = req.body;
+    const { raw_material_name, raw_material_rate, scrap_rate } = req.body;
 
     if (!id) return next(new ErrorHandler("Raw material Id is required", 404));
 
@@ -66,7 +65,6 @@ const editRawMaterial = catchAsyncError(async (req, res, next) => {
         {
             raw_material_name: raw_material_name || rawMaterialData.raw_material_name,
             raw_material_rate: raw_material_rate || rawMaterialData.raw_material_rate,
-            quantity_per_assembly: quantity_per_assembly || rawMaterialData.quantity_per_assembly,
             scrap_rate: scrap_rate || rawMaterialData.scrap_rate,
             updatedAt: new Date(),
         },

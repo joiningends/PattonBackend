@@ -1,5 +1,6 @@
 import { sequelize } from "../config/connectDB.js";
 import { catchAsyncError } from "../middleware/catchAsyncErrorMiddleware.js";
+import { Client } from "../model/clientModel.js";
 // import { Client } from "../model/clientModel.js";
 import ErrorHandler from "../util/ErrorHandler.js";
 
@@ -50,14 +51,16 @@ const saveClientData = catchAsyncError(async (req, res, next) => {
         }
 
         // Check if the result contains an error message
-        if (functionResult.startsWith('Error:')) {
-            return next(new ErrorHandler(functionResult, 400));
+        if (functionResult.message && functionResult.message.startsWith('Error:')) {
+            return next(new ErrorHandler(functionResult.message, 400));
         }
 
+        // Success response
         res.status(200).json({
             success: true,
-            message: functionResult,
-            data: result[0]
+            message: functionResult.message,
+            client_id: functionResult.client_id,
+            data: functionResult
         });
 
     } catch (error) {
@@ -66,6 +69,9 @@ const saveClientData = catchAsyncError(async (req, res, next) => {
     }
 });
 
+
+
+
 // Get client details (all or specific)
 const getClientDetails = catchAsyncError(async (req, res, next) => {
     try {
@@ -73,10 +79,10 @@ const getClientDetails = catchAsyncError(async (req, res, next) => {
 
         // Construct the query based on whether an ID is provided
         const query = 'SELECT * FROM view_client_details(:clientId)';
-        
+
         const result = await sequelize.query(query, {
-            replacements: { 
-                clientId: clientId || null 
+            replacements: {
+                clientId: clientId || null
             },
             type: sequelize.QueryTypes.SELECT
         });
@@ -145,7 +151,7 @@ const processClientResults = (results) => {
 
 
 
- 
+
 // Update client with contacts
 const updateClientData = catchAsyncError(async (req, res, next) => {
     try {
@@ -222,7 +228,7 @@ const disableClient = catchAsyncError(async (req, res, next) => {
         const client = await Client.findByPk(id);
         if (!client) return next(new ErrorHandler("Client not found", 404));
 
-        await client.update({ status: status === 1 ? false : true });
+        await client.update({ status: status });
 
         res.status(200).json({ success: true, message: "Client status updated successfully", data: client });
     } catch (error) {
