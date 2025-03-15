@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 import path from "path";
 import { fileURLToPath } from "url";
 import { promisify } from 'util';
+import { State } from "../model/stateModel.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -460,9 +461,9 @@ const approveOrRejectRFQ = catchAsyncError(async (req, res, next) => {
         );
 
         // Prepare response message based on action
-        const actionMessage = state_id === 2 
-            ? comments 
-                ? "approved with comments and assigned to plant" 
+        const actionMessage = state_id === 2
+            ? comments
+                ? "approved with comments and assigned to plant"
                 : "approved and assigned to plant"
             : "rejected";
 
@@ -473,19 +474,47 @@ const approveOrRejectRFQ = catchAsyncError(async (req, res, next) => {
         });
     } catch (error) {
         console.error("Error details:", error);
-        
+
         // Check for specific PostgreSQL error messages and provide better error handling
         if (error.message && error.message.includes("does not exist or is inactive")) {
             return next(new ErrorHandler(error.message, 404));
         }
-        
+
         if (error.message && error.message.includes("Invalid parameters")) {
             return next(new ErrorHandler(error.message, 400));
         }
-        
+
         next(new ErrorHandler("Internal server error", 500));
     }
 });
 
 
-export { saveRFQandSKUdata, getRFQDetail, uploadRFQDocuments, getRFQDocuments, downloadRFQDocument, deleteRFQDocument, deleteRFQDocumentPermanently, approveOrRejectRFQ };
+
+// fetch all state
+const getStatesOfRFQ = catchAsyncError(async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        let stateData;
+        if (id) {
+            stateData = await State.findByPk(id);
+
+            if (!stateData) return next(new ErrorHandler("No state found for the given id.", 404));
+        } else {
+            stateData = await State.findAll();
+
+            if (!stateData) return next(new ErrorHandler("No data found", 404));;
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "State data fetched successfully.",
+            data: stateData
+        });
+    } catch (error) {
+        console.error("Error details: ", error);
+        next(new ErrorHandler("Internal server error", 500));
+    }
+})
+
+
+export { saveRFQandSKUdata, getRFQDetail, uploadRFQDocuments, getRFQDocuments, downloadRFQDocument, deleteRFQDocument, deleteRFQDocumentPermanently, approveOrRejectRFQ, getStatesOfRFQ };

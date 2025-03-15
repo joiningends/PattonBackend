@@ -34,14 +34,14 @@ const LoginUser = catchAsyncError(async (req, res, next) => {
     const userRole = await sequelize.query(
         'CALL public.getUserRole(:p_user_id, null, null)',
         {
-            replacements: { p_user_id: userDetails.id }, // Use named replacements
-            type: sequelize.QueryTypes.RAW, // Specify the query type
+            replacements: { p_user_id: userDetails.id },        
+            type: sequelize.QueryTypes.RAW,                     
         }
     )
 
 
     console.log("userRole: ", userRole);
-
+ 
 
     const { roleid, role_name } = userRole[0][0];
 
