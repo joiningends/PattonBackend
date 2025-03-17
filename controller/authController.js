@@ -28,20 +28,20 @@ const LoginUser = catchAsyncError(async (req, res, next) => {
 
     if (!isPasswordCorrect) return next(new ErrorHandler("Wrong email address or password.", 404));
 
-    if(userDetails.status === false) return next(new ErrorHandler("User has been made Inactive. Please contact the Admin", 400));
+    if (userDetails.status === false) return next(new ErrorHandler("User has been made Inactive. Please contact the Admin", 400));
 
     // fetch roles
     const userRole = await sequelize.query(
         'CALL public.getUserRole(:p_user_id, null, null)',
         {
-            replacements: { p_user_id: userDetails.id },        
-            type: sequelize.QueryTypes.RAW,                     
+            replacements: { p_user_id: userDetails.id },
+            type: sequelize.QueryTypes.RAW,
         }
     )
 
 
     console.log("userRole: ", userRole);
- 
+
 
     const { roleid, role_name } = userRole[0][0];
 
@@ -201,8 +201,54 @@ const resetPassword = catchAsyncError(async (req, res, next) => {
         message: "Password updated successfully",
         data: userDetails
     })
+});
+
+
+// Token validation endpoint
+const validateToken = catchAsyncError(async (req, res, next) => {
+    const token = req.headers.authorization?.split(" ")[1];
+
+    if (!token) return next(new ErrorHandler("No token provided", 401));
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        const userData = await User.findOne({
+            where: {
+                id: decoded.userId
+            }
+        });
+
+        if (!userData) return next(new ErrorHandler("User not found", 404));
+
+        // fetch roles
+        const userRole = await sequelize.query(
+            'CALL public.getUserRole(:p_user_id, null, null)',
+            {
+                replacements: { p_user_id: userData.id },
+                type: sequelize.QueryTypes.RAW,
+            }
+        )
+
+        console.log("userRole: ", userRole);
+
+
+        const { roleid, role_name } = userRole[0][0];
+
+        res.status(200).json({
+            success: true,
+            user: {
+                id: userData.id,
+                email: userData.email,
+                roleid: roleid,
+                role_name: role_name,
+            },
+        });
+    } catch (error) {
+        return next(new ErrorHandler("invalid token", 401));
+    }
 })
 
 
-export { LoginUser, resetPasswordMail, resetPassword, isFirstTimeLogin };
+export { LoginUser, resetPasswordMail, resetPassword, isFirstTimeLogin, validateToken };
 
