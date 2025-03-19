@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post("/save", authenticateUser, saveRolewithPermission);
 router.put('/update', authenticateUser, updateRolewithPermission);
-router.get('/view/:role_id', authenticateUser, viewRolePermissions);
+router.get('/view/:role_id', viewRolePermissions);
 router.get('/view', authenticateUser, viewRolePermissions);
 
 
