@@ -9,7 +9,7 @@ import ErrorHandler from "../util/ErrorHandler.js";
 // Create plant
 const savePlantData = catchAsyncError(async (req, res, next) => {
 
-    const { plantname, plant_head, plant_engineer, address1, address2, city, state, pincode } = req.body;
+    const { plantname, plant_head, process_engineer, npd_engineer, vendor_development_engineer, address1, address2, city, state, pincode } = req.body;
 
     if (!plantname) return next(new ErrorHandler("Please provide the required fileds.", 400));
 
@@ -24,7 +24,9 @@ const savePlantData = catchAsyncError(async (req, res, next) => {
     const newPlantData = await Plant.create({
         plantname: plantname,
         plant_head: plant_head,
-        plant_engineer: plant_engineer,
+        process_engineer: process_engineer,
+        npd_engineer: npd_engineer,
+        vendor_development_engineer: vendor_development_engineer,
         address1: address1,
         address2: address2,
         city: city,
@@ -65,9 +67,9 @@ const getPlantData = catchAsyncError(async (req, res, next) => {
 // Update the plant data
 const editPlant = catchAsyncError(async (req, res, next) => {
     const { id } = req.params;
-    const { plantname, plant_head, plant_head_id, plant_engineer, plant_engineer_id, address1, address2, city, state, pincode, status } = req.body;
+    const { plantname, plant_head, plant_head_id, process_engineer_id, npd_engineer_id, vendor_development_engineer_id, address1, address2, city, state, pincode, status } = req.body;
 
-    console.log(plant_head, plant_engineer);
+    // console.log(plant_head);
 
     if (!id) return next(new ErrorHandler("Plant id is required", 400));
 
@@ -77,7 +79,9 @@ const editPlant = catchAsyncError(async (req, res, next) => {
     const plant = await plantData.update({
         plantname: plantname || plantData.plantname,
         plant_head: plant_head_id || plantData.plant_head,
-        plant_engineer: plant_engineer_id || plantData.plant_engineer,
+        process_engineer: process_engineer_id || plantData.process_engineer,
+        npd_engineer: npd_engineer_id || plantData.npd_engineer_id,
+        vendor_development_engineer: vendor_development_engineer_id || plantData.vendor_development_engineer,
         status: status || plantData.status,
         address1: address1 || plantData.address1,
         address2: address2 || plantData.address2,
