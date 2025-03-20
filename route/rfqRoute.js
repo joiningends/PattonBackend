@@ -1,5 +1,5 @@
 import express from "express";
-import { approveOrRejectRFQ, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDocuments, getStatesOfRFQ, saveRFQandSKUdata, uploadRFQDocuments } from "../controller/rfqController.js";
+import { approveOrRejectRFQ, assignRFQtoUser, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDocuments, getStatesOfRFQ, saveRFQandSKUdata, uploadRFQDocuments } from "../controller/rfqController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -18,6 +18,10 @@ router.delete("/:documentId/docdelete/permanent", authenticateUser, deleteRFQDoc
 router.post("/approve", approveOrRejectRFQ);                // Approve or reject rfq
 
 // Get state
-router.get("/states/", authenticateUser, getStatesOfRFQ)           // fetch all state
-router.get("/states/:id", authenticateUser, getStatesOfRFQ)        // fetch state by id
+router.get("/states/", authenticateUser, getStatesOfRFQ);           // fetch all state
+router.get("/states/:id", authenticateUser, getStatesOfRFQ);        // fetch state by id
+
+// Assign rfq to user
+router.post("/assign/", authenticateUser, assignRFQtoUser);
+
 export default router;

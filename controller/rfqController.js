@@ -79,15 +79,73 @@ const getRFQDetail = catchAsyncError(async (req, res, next) => {
             return next(new ErrorHandler("No RFQ data found", 404));
         }
 
+        // Process the results to group skus
+        const processedResults = processRFQResults(rfqData);
+
         res.status(200).json({
             success: true,
-            data: rfqData, // Send the array of RFQ details
+            data: processedResults, // Send the array of RFQ details
         });
     } catch (error) {
         console.error("Error fetching RFQ details: ", error);
         next(new ErrorHandler("Internal server error", 500));
     }
 });
+
+
+// Helper function to process and group the sku's
+const processRFQResults = (results) => {
+    const RFQMap = new Map();
+
+    results.forEach(row => {
+        if (!RFQMap.has(row.rfq_id)) {
+            // Create new client entry
+            RFQMap.set(row.rfq_id, {
+                rfq_id: row.rfq_id,
+                rfq_name: row.rfq_name,
+                user_id: row.user_id,
+                role_id: row.role_id,
+                client_id: row.client_id,
+                client_name: row.client_name,
+                plant_id: row.plant_id,
+                state_id: row.state_id,
+                state_description: row.state_description,
+                comments: row.comments,
+                freight_cost: row.freight_cost,
+                ex_factory_cost: row.ex_factory_cost,
+                total_factory_cost: row.total_factory_cost,
+                factory_overhead_cost: row.factory_overhead_cost,
+                insurance_cost: row.insurance_cost,
+                margin: row.margin,
+                cif_cost: row.cif_cost,
+                fob_cost: row.fob_cost,
+                total_cost_to_customer: row.total_cost_to_customer,
+                skus: []
+            });
+        }
+
+        // Add contact if it exists
+        if (row.sku_name) {
+            RFQMap.get(row.rfq_id).skus.push({
+                sku_name: row.sku_name,
+                sku_repeat: row.sku_repeat,
+                sku_tooling_cost: row.sku_tooling_cost,
+                sku_annual_usage: row.sku_annual_usage,
+                sku_assembly_cost: row.sku_assembly_cost,
+                sku_packing_cost: row.sku_packing_cost,
+                sku_description: row.sku_description,
+                sku_drawing_no: row.sku_drawing_no,
+                sku_size: row.sku_size,
+                sku_status: row.sku_status,
+                sku_part_no: row.sku_part_no
+            });
+        }
+    });
+
+    return Array.from(RFQMap.values());
+};
+
+
 
 
 
@@ -517,4 +575,62 @@ const getStatesOfRFQ = catchAsyncError(async (req, res, next) => {
 })
 
 
-export { saveRFQandSKUdata, getRFQDetail, uploadRFQDocuments, getRFQDocuments, downloadRFQDocument, deleteRFQDocument, deleteRFQDocumentPermanently, approveOrRejectRFQ, getStatesOfRFQ };
+// Assign RFQ to a user
+const assignRFQtoUser =  catchAsyncError(async (req, res, next) => {
+    try {
+        const {
+            p_rfq_id,
+            p_assigned_to_id,
+            p_assigned_to_roleid,
+            p_assigned_by_id,
+            p_assigned_by_roleid,
+            p_status
+        } = req.body;
+
+        // Validate required fields
+        if (!p_rfq_id || !p_assigned_to_id || !p_assigned_to_roleid || !p_assigned_by_id || !p_assigned_by_roleid || p_status === undefined) {
+            return next(new ErrorHandler("Please fill all required fields", 400));
+        }
+
+        // Call the PostgreSQL procedure
+        const result = await sequelize.query(
+            'CALL public.rfq_assign(:p_rfq_id, :p_assigned_to_id, :p_assigned_to_roleid, :p_assigned_by_id, :p_assigned_by_roleid, :p_status)',
+            {
+                replacements: {
+                    p_rfq_id,
+                    p_assigned_to_id,
+                    p_assigned_to_roleid,
+                    p_assigned_by_id,
+                    p_assigned_by_roleid,
+                    p_status
+                },
+                type: sequelize.QueryTypes.RAW
+            }
+        );
+
+        // Success response
+        res.status(200).json({
+            success: true,
+            message: 'RFQ assigned successfully',
+            // data: result
+        });
+
+    } catch (error) {
+        console.log("Error details: ", error);
+        next(new ErrorHandler("Internal server error", 500));
+    }
+});
+
+
+export { 
+    saveRFQandSKUdata, 
+    getRFQDetail, 
+    uploadRFQDocuments, 
+    getRFQDocuments, 
+    downloadRFQDocument, 
+    deleteRFQDocument, 
+    deleteRFQDocumentPermanently, 
+    approveOrRejectRFQ, 
+    getStatesOfRFQ,
+    assignRFQtoUser 
+};
