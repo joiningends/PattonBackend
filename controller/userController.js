@@ -350,6 +350,37 @@ const mapUserWithRole = catchAsyncError(async (req, res, next) => {
 });
 
 
+const getNpdEngineer = catchAsyncError(async (req, res, next) => {
+    const { rfq_id } = req.params;
+
+    // Validate if rfq_id is provided
+    if (!rfq_id) {
+        return next(new ErrorHandler('RFQ ID is required', 400));
+    }
+
+    // Query to call the PostgreSQL function
+    const query = `SELECT * FROM get_npd_engineers(:p_rfq_id);`;
+
+    // Execute the query using Sequelize
+    const npdEngineerData = await sequelize.query(query, {
+        replacements: { p_rfq_id: rfq_id },
+        type: sequelize.QueryTypes.SELECT,
+    });
+
+    // Check if data is found
+    if (!npdEngineerData || npdEngineerData.length === 0) {
+        return next(new ErrorHandler('No NPD engineer data found for the given RFQ ID', 404));
+    }
+
+    // Send the response
+    res.status(200).json({
+        success: true,
+        message: 'NPD engineer data fetched successfully',
+        data: npdEngineerData,
+    });
+});
+
+
 
 export {
     saveUserdata,
@@ -360,5 +391,6 @@ export {
     mapUserWithRole,
     verifyEmail,
     sendEmailVerificationMail,
-    getUserRoleDataByUserId
+    getUserRoleDataByUserId,
+    getNpdEngineer
 };
