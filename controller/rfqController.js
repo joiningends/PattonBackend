@@ -59,7 +59,10 @@ const saveRFQandSKUdata = catchAsyncError(async (req, res, next) => {
 
 const getRFQDetail = catchAsyncError(async (req, res, next) => {
     try {
-        const { p_user_id, p_rfq_id, p_client_id } = req.body; // Get parameters from query string
+        const { p_user_id, p_role_id, p_rfq_id, p_client_id } = req.body; // Get parameters from query string
+
+        console.log("user_id: ", p_user_id);
+        console.log("role_id: ", p_role_id);
 
         // Query the function using raw SQL
         const query = `SELECT * FROM get_rfq(:p_user_id, :p_rfq_id, :p_client_id);`;
@@ -68,7 +71,7 @@ const getRFQDetail = catchAsyncError(async (req, res, next) => {
 
         const rfqData = await sequelize.query(query, {
             replacements: {
-                p_user_id: p_user_id || null,
+                p_user_id: p_role_id === 8 ? null : p_user_id,
                 p_rfq_id: p_rfq_id || null,
                 p_client_id: p_client_id || null
             },
@@ -576,7 +579,7 @@ const getStatesOfRFQ = catchAsyncError(async (req, res, next) => {
 
 
 // Assign RFQ to a user
-const assignRFQtoUser =  catchAsyncError(async (req, res, next) => {
+const assignRFQtoUser = catchAsyncError(async (req, res, next) => {
     try {
         const {
             p_rfq_id,
@@ -622,15 +625,15 @@ const assignRFQtoUser =  catchAsyncError(async (req, res, next) => {
 });
 
 
-export { 
-    saveRFQandSKUdata, 
-    getRFQDetail, 
-    uploadRFQDocuments, 
-    getRFQDocuments, 
-    downloadRFQDocument, 
-    deleteRFQDocument, 
-    deleteRFQDocumentPermanently, 
-    approveOrRejectRFQ, 
+export {
+    saveRFQandSKUdata,
+    getRFQDetail,
+    uploadRFQDocuments,
+    getRFQDocuments,
+    downloadRFQDocument,
+    deleteRFQDocument,
+    deleteRFQDocumentPermanently,
+    approveOrRejectRFQ,
     getStatesOfRFQ,
-    assignRFQtoUser 
+    assignRFQtoUser
 };
