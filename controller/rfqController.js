@@ -587,17 +587,18 @@ const assignRFQtoUser = catchAsyncError(async (req, res, next) => {
             p_assigned_to_roleid,
             p_assigned_by_id,
             p_assigned_by_roleid,
-            p_status
+            p_status,
+            p_comments
         } = req.body;
 
         // Validate required fields
-        if (!p_rfq_id || !p_assigned_to_id || !p_assigned_to_roleid || !p_assigned_by_id || !p_assigned_by_roleid || p_status === undefined) {
+        if (!p_rfq_id || !p_assigned_to_id || !p_assigned_to_roleid || !p_assigned_by_id || !p_assigned_by_roleid || !p_comments || p_status === undefined) {
             return next(new ErrorHandler("Please fill all required fields", 400));
         }
 
         // Call the PostgreSQL procedure
         const result = await sequelize.query(
-            'CALL public.rfq_assign(:p_rfq_id, :p_assigned_to_id, :p_assigned_to_roleid, :p_assigned_by_id, :p_assigned_by_roleid, :p_status)',
+            'CALL public.rfq_assign(:p_rfq_id, :p_assigned_to_id, :p_assigned_to_roleid, :p_assigned_by_id, :p_assigned_by_roleid, :p_status, :p_comments)',
             {
                 replacements: {
                     p_rfq_id,
@@ -605,7 +606,8 @@ const assignRFQtoUser = catchAsyncError(async (req, res, next) => {
                     p_assigned_to_roleid,
                     p_assigned_by_id,
                     p_assigned_by_roleid,
-                    p_status
+                    p_status,
+                    p_comments
                 },
                 type: sequelize.QueryTypes.RAW
             }
@@ -625,6 +627,30 @@ const assignRFQtoUser = catchAsyncError(async (req, res, next) => {
 });
 
 
+const rejectRFQbyPlantHead = catchAsyncError(async (req, res, next) => {
+    const { p_rfq_id, p_user_id, p_comments } = req.body;
+
+    if (!p_rfq_id || !p_user_id || !p_comments) return next(new ErrorHandler("Please fill all the required fields", 400));
+
+    const response = await sequelize.query(
+        'CALL public.reject_rfq_by_planthead(:p_rfq_id, :p_user_id, :p_comments)',
+        {
+            replacements: {
+                p_rfq_id,
+                p_user_id,
+                p_comments
+            },
+            type: sequelize.QueryTypes.RAW
+        }
+    );
+
+    res.status(200).json({
+        success: true,
+        message: "RFQ rejected by plant head"
+    })
+})
+
+
 export {
     saveRFQandSKUdata,
     getRFQDetail,
@@ -635,5 +661,6 @@ export {
     deleteRFQDocumentPermanently,
     approveOrRejectRFQ,
     getStatesOfRFQ,
-    assignRFQtoUser
+    assignRFQtoUser,
+    rejectRFQbyPlantHead
 };
