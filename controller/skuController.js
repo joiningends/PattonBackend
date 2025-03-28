@@ -63,7 +63,7 @@ const getProductsBySKUId = catchAsyncError(async (req, res, next) => {
         type: sequelize.QueryTypes.SELECT,
     });
 
-    if(!productData || productData.length === 0) {
+    if (!productData || productData.length === 0) {
         return next(new ErrorHandler("No products found for the given SKU ID", 404));
     }
 
@@ -112,8 +112,33 @@ const saveProductswithSKUdetails = catchAsyncError(async (req, res, next) => {
 });
 
 
+const deleteProductById = catchAsyncError(async (req, res, next) => {
+    try {
+        const { product_id } = req.params;
+
+        if (!product_id) return next(new ErrorHandler("Product id is required", 400));
+
+        // calling the postgreSQL stored procedure
+        const result = await sequelize.query(
+            `CALL delete_product_by_id(:p_product_id)`,
+            {
+                replacements: {
+                    p_product_id: product_id
+                },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "Product delete successfuly."
+        });
+    }catch(error){
+        console.error("Error details: ", error);
+        next(new ErrorHandler("Internal server error", 500));
+    }
+})
 
 
 
-
-export { getSKUbyRFQid, saveProductswithSKUdetails, getProductsBySKUId };
+export { getSKUbyRFQid, saveProductswithSKUdetails, getProductsBySKUId, deleteProductById };

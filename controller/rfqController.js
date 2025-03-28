@@ -96,6 +96,57 @@ const getRFQDetail = catchAsyncError(async (req, res, next) => {
 });
 
 
+const getRFQDetailByNPD = catchAsyncError(async (req, res, next) => {
+    try {
+        const { user_id } = req.params;
+
+        if (!user_id) return next(new ErrorHandler("User id is required.", 400));
+
+        const roleResponse = await sequelize.query(
+            `SELECT role_id FROM user_role_rtable WHERE user_id = :p_user_id;`,
+            {
+                replacements: {
+                    p_user_id: user_id
+                },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (!roleResponse) return next(new ErrorHandler("Unrecognised role by the given user id."));
+
+        console.log("roleResponse: ", roleResponse[0].role_id);
+
+        if (roleResponse[0].role_id !== 19) return next(new ErrorHandler("Not a NPD engineer."));
+
+        const rfqData = await sequelize.query(
+            `SELECT * FROM get_rfq_by_npd(:p_user_id);`,
+            {
+                replacements: {
+                    p_user_id: user_id
+                },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (!rfqData || rfqData.length === 0) {
+            return next(new ErrorHandler("No RFQ data found", 404));
+        }
+
+        // Process the results to group skus
+        const processedResults = processRFQResults(rfqData);
+
+        res.status(200).json({
+            success: true,
+            data: processedResults, // Send the array of RFQ details
+        });
+
+    } catch (error) {
+        console.error("Error fetching RFQ details: ", error);
+        next(new ErrorHandler("Internal server error", 500));
+    }
+})
+
+
 // Helper function to process and group the sku's
 const processRFQResults = (results) => {
     const RFQMap = new Map();
@@ -627,18 +678,19 @@ const assignRFQtoUser = catchAsyncError(async (req, res, next) => {
 });
 
 
-const rejectRFQbyPlantHead = catchAsyncError(async (req, res, next) => {
-    const { p_rfq_id, p_user_id, p_comments } = req.body;
+const rejectRFQwithState = catchAsyncError(async (req, res, next) => {
+    const { p_rfq_id, p_user_id, p_comments, p_state_id } = req.body;
 
-    if (!p_rfq_id || !p_user_id || !p_comments) return next(new ErrorHandler("Please fill all the required fields", 400));
+    if (!p_rfq_id || !p_user_id || !p_comments || !p_state_id) return next(new ErrorHandler("Please fill all the required fields", 400));
 
     const response = await sequelize.query(
-        'CALL public.reject_rfq_by_planthead(:p_rfq_id, :p_user_id, :p_comments)',
+        'CALL public.reject_rfq_with_state(:p_rfq_id, :p_user_id, :p_comments, :p_state_id)',
         {
             replacements: {
                 p_rfq_id,
                 p_user_id,
-                p_comments
+                p_comments,
+                p_state_id
             },
             type: sequelize.QueryTypes.RAW
         }
@@ -662,5 +714,6 @@ export {
     approveOrRejectRFQ,
     getStatesOfRFQ,
     assignRFQtoUser,
-    rejectRFQbyPlantHead
+    rejectRFQwithState,
+    getRFQDetailByNPD
 };

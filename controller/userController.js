@@ -382,6 +382,40 @@ const getNpdEngineer = catchAsyncError(async (req, res, next) => {
 
 
 
+const getVendorEngineer = catchAsyncError(async (req, res, next) => {
+    try {
+        const { rfq_id } = req.params;
+
+        if (!rfq_id) return next(new ErrorHandler("RFQ Id is required.", 400));
+
+        const vendorEngineerData = await sequelize.query(
+            `SELECT * FROM get_vendor_eng(:p_rfq_id);`,
+            {
+                replacements: {
+                    p_rfq_id: rfq_id
+                },
+                type: sequelize.QueryTypes.SELECT,
+            }
+        );
+
+        if (!vendorEngineerData || vendorEngineerData.length === 0) {
+            return next(new ErrorHandler("No vendor development engineer data found for the given RFQ id.", 404));
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Vendor development engineer data fetched successfully",
+            data: vendorEngineerData
+        });
+
+    } catch (error) {
+        console.error("Error details: ", error);
+        next(new ErrorHandler("internal server error", 500));
+    }
+})
+
+
+
 export {
     saveUserdata,
     getUserData,
@@ -392,5 +426,6 @@ export {
     verifyEmail,
     sendEmailVerificationMail,
     getUserRoleDataByUserId,
-    getNpdEngineer
+    getNpdEngineer,
+    getVendorEngineer
 };

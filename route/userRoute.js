@@ -1,5 +1,5 @@
 import express from "express";
-import { saveUserdata, getUserData, editUserData, enableDisableUser, deleteUser, mapUserWithRole, verifyEmail, sendEmailVerificationMail, getUserRoleDataByUserId, getNpdEngineer } from "../controller/userController.js";
+import { saveUserdata, getUserData, editUserData, enableDisableUser, deleteUser, mapUserWithRole, verifyEmail, sendEmailVerificationMail, getUserRoleDataByUserId, getNpdEngineer, getVendorEngineer } from "../controller/userController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -15,6 +15,7 @@ router.get("/verify/email", verifyEmail);               // verify email
 router.get("/send-email/verification", sendEmailVerificationMail);      // send email verification
 router.get("/userRoledata/:id", getUserRoleDataByUserId);
 router.get("/get-npdengineer/:rfq_id", getNpdEngineer);
+router.get("/get-vendoreng/:rfq_id", getVendorEngineer);
 router.get("/:id", getUserData);                        // fecth user by Id
 
 export default router; 
