@@ -112,6 +112,44 @@ const saveProductswithSKUdetails = catchAsyncError(async (req, res, next) => {
 });
 
 
+const saveBOMProductswithSKUdetails = catchAsyncError(async (req, res, next) => {
+    try {
+        const { p_sku_id, p_bom_products } = req.body;
+
+        console.log("Backend products: ", p_bom_products);
+
+        // Check for SKU ID
+        if (!p_sku_id) return next(new ErrorHandler("Please provide the SKU id.", 400));
+
+        // Check for products array
+        if (!Array.isArray(p_bom_products) || p_bom_products.length === 0) {
+            return next(new ErrorHandler("Products must be a non-empty array", 400));
+        }
+
+        // calling the postgreSQL stored procedure
+        const result = await sequelize.query(
+            `CALL insert_bom_products_with_sku_details(:p_sku_id, :p_bom_products)`,
+            {
+                replacements: {
+                    p_sku_id,
+                    p_bom_products: p_bom_products ? JSON.stringify(p_bom_products) : null
+                },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "Products inserted successfully with SKU details.",
+        });
+    
+    } catch (error) {
+        console.error("Error details: ", error);
+        next(new ErrorHandler("Internal server error", 500));
+    }
+})
+
+
 const deleteProductById = catchAsyncError(async (req, res, next) => {
     try {
         const { product_id } = req.params;
@@ -133,7 +171,7 @@ const deleteProductById = catchAsyncError(async (req, res, next) => {
             success: true,
             message: "Product delete successfuly."
         });
-    }catch(error){
+    } catch (error) {
         console.error("Error details: ", error);
         next(new ErrorHandler("Internal server error", 500));
     }
@@ -141,4 +179,4 @@ const deleteProductById = catchAsyncError(async (req, res, next) => {
 
 
 
-export { getSKUbyRFQid, saveProductswithSKUdetails, getProductsBySKUId, deleteProductById };
+export { getSKUbyRFQid, saveProductswithSKUdetails, getProductsBySKUId, deleteProductById, saveBOMProductswithSKUdetails };

@@ -1,12 +1,12 @@
 import express from "express";
-import { approveOrRejectRFQ, assignRFQtoUser, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDetailByNPD, getRFQDocuments, getStatesOfRFQ, rejectRFQwithState, saveRFQandSKUdata, uploadRFQDocuments } from "../controller/rfqController.js";
+import { approveOrRejectRFQ, assignRFQtoUser, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDetailByUserRole, getRFQDocuments, getStatesOfRFQ, rejectRFQwithState, saveRFQandSKUdata, uploadRFQDocuments } from "../controller/rfqController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 router.post('/saverfq', saveRFQandSKUdata);         // Save rfq
 router.post("/getrfq", getRFQDetail);               // fetch rfq
-router.get("/getrfqbynpd/:user_id", getRFQDetailByNPD);
+router.get("/getrfqbyuserrole/:user_id", getRFQDetailByUserRole);
 
 // rfq documents routes
 router.post("/:rfqId/documents", authenticateUser, uploadRFQDocuments);

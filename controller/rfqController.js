@@ -96,33 +96,36 @@ const getRFQDetail = catchAsyncError(async (req, res, next) => {
 });
 
 
-const getRFQDetailByNPD = catchAsyncError(async (req, res, next) => {
+const getRFQDetailByUserRole = catchAsyncError(async (req, res, next) => {
     try {
         const { user_id } = req.params;
+        const { p_assigned_to_roleId, p_assigned_by_roleId } = req.query;
 
         if (!user_id) return next(new ErrorHandler("User id is required.", 400));
 
-        const roleResponse = await sequelize.query(
-            `SELECT role_id FROM user_role_rtable WHERE user_id = :p_user_id;`,
-            {
-                replacements: {
-                    p_user_id: user_id
-                },
-                type: sequelize.QueryTypes.SELECT
-            }
-        );
+        // const roleResponse = await sequelize.query(
+        //     `SELECT role_id FROM user_role_rtable WHERE user_id = :p_user_id;`,
+        //     {
+        //         replacements: {
+        //             p_user_id: user_id
+        //         },
+        //         type: sequelize.QueryTypes.SELECT
+        //     }
+        // );
 
-        if (!roleResponse) return next(new ErrorHandler("Unrecognised role by the given user id."));
+        // if (!roleResponse) return next(new ErrorHandler("Unrecognised role by the given user id."));
 
-        console.log("roleResponse: ", roleResponse[0].role_id);
+        // console.log("roleResponse: ", roleResponse[0].role_id);
 
-        if (roleResponse[0].role_id !== 19) return next(new ErrorHandler("Not a NPD engineer."));
+        // if (roleResponse[0].role_id !== 19) return next(new ErrorHandler("Not a NPD engineer."));
 
         const rfqData = await sequelize.query(
-            `SELECT * FROM get_rfq_by_npd(:p_user_id);`,
+            `SELECT * FROM get_rfq_by_user_role(:p_user_id, :p_assigned_to_role, :p_assigned_by_role);`,
             {
                 replacements: {
-                    p_user_id: user_id
+                    p_user_id: user_id,
+                    p_assigned_to_role: p_assigned_to_roleId,
+                    p_assigned_by_role: p_assigned_by_roleId,
                 },
                 type: sequelize.QueryTypes.SELECT
             }
@@ -715,5 +718,5 @@ export {
     getStatesOfRFQ,
     assignRFQtoUser,
     rejectRFQwithState,
-    getRFQDetailByNPD
+    getRFQDetailByUserRole
 };
