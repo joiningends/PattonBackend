@@ -415,6 +415,34 @@ const getVendorEngineer = catchAsyncError(async (req, res, next) => {
 })
 
 
+const getProcessEngineer = catchAsyncError(async (req, res, next) => {
+    
+    const { rfq_id } = req.params;
+
+    if (!rfq_id) return next(new ErrorHandler("RFQ id is required.", 400));
+
+    const processEngineerData = await sequelize.query(
+        `SELECT * FROM get_process_eng(:p_rfq_id);`,
+        {
+            replacements: {
+                p_rfq_id: rfq_id
+            },
+            type: sequelize.QueryTypes.SELECT,
+        }
+    );
+
+    if(!processEngineerData || processEngineerData.length === 0) {
+        return next(new ErrorHandler("No process engineer data found for the given RFQ id", 404));
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Process engineer fetched successfully",
+        data: processEngineerData
+    });
+
+})
+
 
 export {
     saveUserdata,
@@ -427,5 +455,6 @@ export {
     sendEmailVerificationMail,
     getUserRoleDataByUserId,
     getNpdEngineer,
-    getVendorEngineer
+    getVendorEngineer,
+    getProcessEngineer
 };
