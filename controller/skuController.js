@@ -178,5 +178,65 @@ const deleteProductById = catchAsyncError(async (req, res, next) => {
 })
 
 
+const editYieldPercentageByProductId = catchAsyncError(async (req, res, next) => {
+    const {product_id, yield_percentage} = req.body;
 
-export { getSKUbyRFQid, saveProductswithSKUdetails, getProductsBySKUId, deleteProductById, saveBOMProductswithSKUdetails };
+
+    if(!product_id) return next(new ErrorHandler("Product id is required.", 400));
+
+    const result = await sequelize.query(
+        `UPDATE product_table SET yield_percentage = ${yield_percentage} WHERE id = ${product_id}`
+    );
+
+    res.status(200).json({
+        success: true,
+        message: "Yield percentage changed successfully."
+    });
+})
+
+
+const editBomCostPerkgByProductId = catchAsyncError(async (req, res, next) => {
+    const {product_id, bom_cost_per_kg} = req.body;
+
+
+    if(!product_id) return next(new ErrorHandler("Product id is required.", 400));
+
+    const result = await sequelize.query(
+        `UPDATE product_table SET bom_cost_per_kg = ${bom_cost_per_kg} WHERE id = ${product_id}`
+    );
+
+    res.status(200).json({
+        success: true,
+        message: "Bom cost per kg changed successfully."
+    });
+})
+
+
+const editNetWeightOfProductByProductId = catchAsyncError(async (req, res, next) => {
+    const {product_id, net_weight_of_product} = req.body;
+
+
+    if(!product_id) return next(new ErrorHandler("Product id is required.", 400));
+
+    const result = await sequelize.query(
+        `UPDATE product_table SET net_weight_of_product = ${net_weight_of_product} WHERE id = ${product_id}`
+    );
+
+    res.status(200).json({
+        success: true,
+        message: "Yield percentage changed successfully."
+    });
+})
+
+
+
+export { 
+    getSKUbyRFQid, 
+    saveProductswithSKUdetails, 
+    getProductsBySKUId, 
+    deleteProductById, 
+    saveBOMProductswithSKUdetails,
+    editYieldPercentageByProductId,
+    editBomCostPerkgByProductId,
+    editNetWeightOfProductByProductId
+};
