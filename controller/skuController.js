@@ -142,7 +142,7 @@ const saveBOMProductswithSKUdetails = catchAsyncError(async (req, res, next) => 
             success: true,
             message: "Products inserted successfully with SKU details.",
         });
-    
+
     } catch (error) {
         console.error("Error details: ", error);
         next(new ErrorHandler("Internal server error", 500));
@@ -179,10 +179,10 @@ const deleteProductById = catchAsyncError(async (req, res, next) => {
 
 
 const editYieldPercentageByProductId = catchAsyncError(async (req, res, next) => {
-    const {product_id, yield_percentage} = req.body;
+    const { product_id, yield_percentage } = req.body;
 
 
-    if(!product_id) return next(new ErrorHandler("Product id is required.", 400));
+    if (!product_id) return next(new ErrorHandler("Product id is required.", 400));
 
     const result = await sequelize.query(
         `UPDATE product_table SET yield_percentage = ${yield_percentage} WHERE id = ${product_id}`
@@ -196,10 +196,10 @@ const editYieldPercentageByProductId = catchAsyncError(async (req, res, next) =>
 
 
 const editBomCostPerkgByProductId = catchAsyncError(async (req, res, next) => {
-    const {product_id, bom_cost_per_kg} = req.body;
+    const { product_id, bom_cost_per_kg } = req.body;
 
 
-    if(!product_id) return next(new ErrorHandler("Product id is required.", 400));
+    if (!product_id) return next(new ErrorHandler("Product id is required.", 400));
 
     const result = await sequelize.query(
         `UPDATE product_table SET bom_cost_per_kg = ${bom_cost_per_kg} WHERE id = ${product_id}`
@@ -213,10 +213,10 @@ const editBomCostPerkgByProductId = catchAsyncError(async (req, res, next) => {
 
 
 const editNetWeightOfProductByProductId = catchAsyncError(async (req, res, next) => {
-    const {product_id, net_weight_of_product} = req.body;
+    const { product_id, net_weight_of_product } = req.body;
 
 
-    if(!product_id) return next(new ErrorHandler("Product id is required.", 400));
+    if (!product_id) return next(new ErrorHandler("Product id is required.", 400));
 
     const result = await sequelize.query(
         `UPDATE product_table SET net_weight_of_product = ${net_weight_of_product} WHERE id = ${product_id}`
@@ -229,14 +229,40 @@ const editNetWeightOfProductByProductId = catchAsyncError(async (req, res, next)
 })
 
 
+const updateAssemblyCostBySkuid = catchAsyncError(async (req, res, next) => {
+    const {sku_id} = req.params;
 
-export { 
-    getSKUbyRFQid, 
-    saveProductswithSKUdetails, 
-    getProductsBySKUId, 
-    deleteProductById, 
+    if(!sku_id) return next(new ErrorHandler("SKU id is required.", 400));
+
+    const result = await sequelize.query(
+        `SELECT update_sku_assembly_cost(:p_sku_id);`,
+        {
+            replacements: {
+                p_sku_id: sku_id
+            },
+            type: sequelize.QueryTypes.SELECT
+        }
+    );
+
+
+    console.log("Result of assembly cost: ", result);
+
+    res.status(200).json({
+        success: true,
+        message: "Assembly cost calculated successfully.",
+        data: result
+    })
+})
+
+
+export {
+    getSKUbyRFQid,
+    saveProductswithSKUdetails,
+    getProductsBySKUId,
+    deleteProductById,
     saveBOMProductswithSKUdetails,
     editYieldPercentageByProductId,
     editBomCostPerkgByProductId,
-    editNetWeightOfProductByProductId
+    editNetWeightOfProductByProductId,
+    updateAssemblyCostBySkuid
 };
