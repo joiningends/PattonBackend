@@ -1,5 +1,5 @@
 import express from "express";
-import { approveOrRejectRFQ, assignRFQtoUser, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDetailByUserRole, getRFQDocuments, getStatesOfRFQ, rejectRFQwithState, saveRFQandSKUdata, uploadRFQDocuments } from "../controller/rfqController.js";
+import { approveOrRejectRFQ, assignRFQtoUser, autoCalculateCostsByRfqId, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDetailByUserRole, getRFQDocuments, getStatesOfRFQ, rejectRFQwithState, saveRFQandSKUdata, uploadRFQDocuments } from "../controller/rfqController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -25,5 +25,7 @@ router.get("/states/:id", authenticateUser, getStatesOfRFQ);        // fetch sta
 
 router.post("/assign/", authenticateUser, assignRFQtoUser);                     // Assign rfq to user
 router.post("/reject/", authenticateUser, rejectRFQwithState);    // Reject rfq by plant head
+
+router.post("/auto-calculate/", authenticateUser, autoCalculateCostsByRfqId);
 
 export default router;

@@ -703,7 +703,30 @@ const rejectRFQwithState = catchAsyncError(async (req, res, next) => {
         success: true,
         message: "RFQ rejected by plant head"
     })
-})
+});
+
+
+
+const autoCalculateCostsByRfqId = catchAsyncError(async (req, res, next) => {
+    const { p_rfq_id } = req.body;
+
+    if (!p_rfq_id) return next(new ErrorHandler("RFQ id is required.", 400));
+
+    const response = await sequelize.query(
+        'SELECT * FROM calculate_all_product_costs_for_rfq(:p_rfq_id);',
+        {
+            replacements: {
+                p_rfq_id: p_rfq_id
+            },
+            type: sequelize.QueryTypes.RAW
+        }
+    );
+
+    res.status(200).json({
+        success: true,
+        message: "Auto calculation executed successfully."
+    })
+});
 
 
 export {
@@ -718,5 +741,6 @@ export {
     getStatesOfRFQ,
     assignRFQtoUser,
     rejectRFQwithState,
-    getRFQDetailByUserRole
+    getRFQDetailByUserRole,
+    autoCalculateCostsByRfqId
 };

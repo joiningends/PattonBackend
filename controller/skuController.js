@@ -80,6 +80,8 @@ const saveProductswithSKUdetails = catchAsyncError(async (req, res, next) => {
     try {
         const { p_sku_id, p_products } = req.body;
 
+        console.log("Backend product : ", p_products);
+
         // Check for SKU ID
         if (!p_sku_id) return next(new ErrorHandler("Please provide the SKU ID", 400));
 
@@ -88,13 +90,22 @@ const saveProductswithSKUdetails = catchAsyncError(async (req, res, next) => {
             return next(new ErrorHandler("Products must be a non-empty array", 400));
         }
 
+        // Convert the array to a properly formatted JSON string
+        const productsJson = JSON.stringify(p_products.map(product => ({
+            product_name: product.product_name,
+            quantity_per_assembly: product.quantity_per_assembly,
+            raw_material_type: product.raw_material_type,
+            yield_percentage: product.yield_percentage,
+            net_weight_of_product: product.net_weight_of_product
+        })));
+
         // calling the postgreSQL stored procedure
         const result = await sequelize.query(
             `CALL insert_product_with_sku_details(:p_sku_id, :p_products)`,
             {
                 replacements: {
                     p_sku_id,
-                    p_products: p_products ? JSON.stringify(p_products) : null
+                    p_products: productsJson
                 },
                 type: sequelize.QueryTypes.SELECT
             }
@@ -230,9 +241,9 @@ const editNetWeightOfProductByProductId = catchAsyncError(async (req, res, next)
 
 
 const updateAssemblyCostBySkuid = catchAsyncError(async (req, res, next) => {
-    const {sku_id} = req.params;
+    const { sku_id } = req.params;
 
-    if(!sku_id) return next(new ErrorHandler("SKU id is required.", 400));
+    if (!sku_id) return next(new ErrorHandler("SKU id is required.", 400));
 
     const result = await sequelize.query(
         `SELECT update_sku_assembly_cost(:p_sku_id);`,
