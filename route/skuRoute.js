@@ -1,5 +1,5 @@
 import express from "express";
-import { deleteProductById, editBomCostPerkgByProductId, editNetWeightOfProductByProductId, editYieldPercentageByProductId, getProductsBySKUId, getSKUbyRFQid, saveBOMProductswithSKUdetails, saveProductswithSKUdetails, updateAssemblyCostBySkuid } from "../controller/skuController.js";
+import { deleteProductById, editBomCostPerKgbyProductId, editBomCostPerkgByProductId, editNetWeightOfProductByProductId, editProductNetWeightProductId, editYieldPercbyProductId, editYieldPercentageByProductId, getProductsBySKUId, getSKUbyRFQid, saveBOMProductswithSKUdetails, saveProductswithSKUdetails, updateAssemblyCostBySkuid } from "../controller/skuController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 
@@ -15,5 +15,8 @@ router.post("/edit/yield-percentage", authenticateUser, editYieldPercentageByPro
 router.post("/edit/bomcostperkg", authenticateUser, editBomCostPerkgByProductId);
 router.post("/edit/netweight-product", authenticateUser, editNetWeightOfProductByProductId);
 router.get("/calculate-assembly/:sku_id", authenticateUser, updateAssemblyCostBySkuid);
+router.post("/edit-yield", authenticateUser, editYieldPercbyProductId);
+router.post("/edit-bom-cost", authenticateUser, editBomCostPerKgbyProductId);
+router.post("/edit-net-weight", authenticateUser, editProductNetWeightProductId);
 
 export default router;
