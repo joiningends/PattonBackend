@@ -56,7 +56,7 @@ const editRawMaterial = catchAsyncError(async (req, res, next) => {
     const { id } = req.params;
     const { raw_material_name, raw_material_rate, scrap_rate } = req.body;
 
-    if (!id) return next(new ErrorHandler("Raw material Id is required", 404));
+    if (!id) return next(new ErrorHandler("Raw material Id is required", 400));
 
     const rawMaterialData = await RawMaterial.findByPk(id);
     if (!rawMaterialData) return next(new ErrorHandler("Raw Material not found", 404));

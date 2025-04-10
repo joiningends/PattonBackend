@@ -18,6 +18,7 @@ import rawMaterialRoute from "./route/rawMaterialRoute.js";
 import plantRoute from "./route/plantRoute.js";
 import testRoute from "./route/testRoute.js";
 import authRoute from "./route/authRoute.js";
+import jobTypeRoute from "./route/jobTypeRoute.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -46,7 +47,7 @@ app.use("/api/sku", skuRoute);
 app.use("/api/rawmaterial", rawMaterialRoute);
 app.use("/api/plant", plantRoute);
 app.use("/api/auth", authRoute);
-
+app.use("/api/job-type", jobTypeRoute);
 
 //testing 
 app.use(testRoute);

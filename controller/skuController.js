@@ -240,13 +240,13 @@ const editNetWeightOfProductByProductId = catchAsyncError(async (req, res, next)
 })
 
 
-const updateAssemblyCostBySkuid = catchAsyncError(async (req, res, next) => {
+const updateAssemblyWeightBySkuid = catchAsyncError(async (req, res, next) => {
     const { sku_id } = req.params;
 
     if (!sku_id) return next(new ErrorHandler("SKU id is required.", 400));
 
     const result = await sequelize.query(
-        `SELECT update_sku_assembly_cost(:p_sku_id);`,
+        `SELECT update_sku_assembly_weight(:p_sku_id);`,
         {
             replacements: {
                 p_sku_id: sku_id
@@ -379,7 +379,7 @@ export {
     editYieldPercentageByProductId,
     editBomCostPerkgByProductId,
     editNetWeightOfProductByProductId,
-    updateAssemblyCostBySkuid,
+    updateAssemblyWeightBySkuid,
     editYieldPercbyProductId,
     editBomCostPerKgbyProductId,
     editProductNetWeightProductId
