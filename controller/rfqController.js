@@ -119,6 +119,8 @@ const getRFQDetailByUserRole = catchAsyncError(async (req, res, next) => {
 
         // if (roleResponse[0].role_id !== 19) return next(new ErrorHandler("Not a NPD engineer."));
 
+        console.log("role data: ", user_id, p_assigned_by_roleId, p_assigned_to_roleId);
+
         const rfqData = await sequelize.query(
             `SELECT * FROM get_rfq_by_user_role(:p_user_id, :p_assigned_to_role, :p_assigned_by_role);`,
             {

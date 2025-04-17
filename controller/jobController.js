@@ -1,6 +1,7 @@
 import { catchAsyncError } from "../middleware/catchAsyncErrorMiddleware.js";
 import { JobTypes } from "../model/jobTypeModel.js";
 import ErrorHandler from "../util/ErrorHandler.js";
+import { sequelize } from "../config/connectDB.js";
 
 
 
@@ -102,6 +103,8 @@ const deleteJobType = catchAsyncError(async (req, res, next) => {
         message: "Job type deleted successfully"
     });
 });
+
+
 
 
 

@@ -1,5 +1,5 @@
 import express from "express";
-import { deleteProductById, editBomCostPerKgbyProductId, editBomCostPerkgByProductId, editNetWeightOfProductByProductId, editProductNetWeightProductId, editYieldPercbyProductId, editYieldPercentageByProductId, getProductsBySKUId, getSKUbyRFQid, saveBOMProductswithSKUdetails, saveProductswithSKUdetails, updateAssemblyWeightBySkuid } from "../controller/skuController.js";
+import { calculateSubTotalCost, deleteJobCostBySkuJobId, deleteProductById, editBomCostPerKgbyProductId, editBomCostPerkgByProductId, editNetWeightOfProductByProductId, editProductNetWeightProductId, editYieldPercbyProductId, editYieldPercentageByProductId, getJobCostsByRfqAndSku, getProductsBySKUId, getSKUbyRFQid, saveBOMProductswithSKUdetails, saveOrUpdateJobCost, saveProductswithSKUdetails, updateAssemblyWeightBySkuid } from "../controller/skuController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 
@@ -18,5 +18,9 @@ router.get("/calculate-assembly/:sku_id", authenticateUser, updateAssemblyWeight
 router.post("/edit-yield", authenticateUser, editYieldPercbyProductId);
 router.post("/edit-bom-cost", authenticateUser, editBomCostPerKgbyProductId);
 router.post("/edit-net-weight", authenticateUser, editProductNetWeightProductId);
+router.post("/job-cost", authenticateUser, saveOrUpdateJobCost);
+router.get("/fetch/job-cost/:rfqId/:skuId", authenticateUser, getJobCostsByRfqAndSku);
+router.get("/calculate/sub-total-cost/:sku_id/:rfq_id", authenticateUser, calculateSubTotalCost);
+router.delete("/delete/job-cost/:jobId/:skuId", authenticateUser, deleteJobCostBySkuJobId);
 
 export default router;

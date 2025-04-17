@@ -5,12 +5,11 @@ import { deleteJobType, editJobType, getJobType, saveJobTypes } from "../control
 
 const router = express.Router();
 
-router.post("/save", authenticateUser, saveJobTypes);
 router.get("/", authenticateUser, getJobType);
 router.get("/:id", authenticateUser, getJobType);
+router.post("/save/", authenticateUser, saveJobTypes);
 router.post("/edit/:id", authenticateUser, editJobType);
 router.get("/delete/:id", authenticateUser, deleteJobType);
-
 
 
 export default router;

@@ -268,8 +268,8 @@ const updateAssemblyWeightBySkuid = catchAsyncError(async (req, res, next) => {
 const editYieldPercbyProductId = catchAsyncError(async (req, res, next) => {
     const { product_id, yield_percentage } = req.body;
 
-    if(!product_id) next(new ErrorHandler("Product id is required.", 400));
-    if(!yield_percentage) next(new ErrorHandler("Yield percentage is required.", 400));
+    if (!product_id) next(new ErrorHandler("Product id is required.", 400));
+    if (!yield_percentage) next(new ErrorHandler("Yield percentage is required.", 400));
 
     const [result] = await sequelize.query(
         `SELECT * FROM update_product_yield_percentage(:p_product_id, :p_yield_percentage);`,
@@ -303,8 +303,8 @@ const editYieldPercbyProductId = catchAsyncError(async (req, res, next) => {
 const editBomCostPerKgbyProductId = catchAsyncError(async (req, res, next) => {
     const { product_id, bom_cost_per_kg } = req.body;
 
-    if(!product_id) next(new ErrorHandler("Product id is required.", 400));
-    if(!bom_cost_per_kg) next(new ErrorHandler("Bom cost per kg is required.", 400));
+    if (!product_id) next(new ErrorHandler("Product id is required.", 400));
+    if (!bom_cost_per_kg) next(new ErrorHandler("Bom cost per kg is required.", 400));
 
     const [result] = await sequelize.query(
         `SELECT * FROM update_product_bom_cost_per_kg(:p_product_id, :p_bom_cost_per_kg);`,
@@ -339,8 +339,8 @@ const editBomCostPerKgbyProductId = catchAsyncError(async (req, res, next) => {
 const editProductNetWeightProductId = catchAsyncError(async (req, res, next) => {
     const { product_id, net_weight_of_product } = req.body;
 
-    if(!product_id) next(new ErrorHandler("Product id is required.", 400));
-    if(!net_weight_of_product) next(new ErrorHandler("net weight of product is required.", 400));
+    if (!product_id) next(new ErrorHandler("Product id is required.", 400));
+    if (!net_weight_of_product) next(new ErrorHandler("net weight of product is required.", 400));
 
     const [result] = await sequelize.query(
         `SELECT * FROM update_product_net_weight(:p_product_id, :p_net_weight_of_product);`,
@@ -367,7 +367,232 @@ const editProductNetWeightProductId = catchAsyncError(async (req, res, next) => 
         success: true,
         message: result.message,
     });
-})
+});
+
+
+const saveOrUpdateJobCost = catchAsyncError(async (req, res, next) => {
+    const { job_id, isskulevel, sku_id, rfq_id, job_costs, status, isEdit = false } = req.body;
+
+    // Validate required fields
+    if (!job_id || isskulevel === undefined || !rfq_id || !job_costs || status === undefined) {
+        return next(new ErrorHandler("Please provide all required fields: job_id, isskulevel, rfq_id, job_costs, status", 400));
+    }
+
+    // For SKU level, validate sku_id exists
+    if (isskulevel === true && !sku_id) {
+        return next(new ErrorHandler("SKU ID is required for SKU level job costs", 400));
+    }
+
+    // For product level, validate job_costs array structure
+    if (isskulevel === false) {
+        if (!Array.isArray(job_costs) || job_costs.length === 0) {
+            return next(new ErrorHandler("Job costs must be a non-empty array for product level", 400));
+        }
+
+        for (const cost of job_costs) {
+            if (!cost.product_id || cost.job_cost === undefined) {
+                return next(new ErrorHandler("Each product cost must contain product_id, job_cost", 400));
+            }
+        }
+    } else {
+        // For SKU level, ensure job_costs has at least one entry (but only first is used)
+        if (!Array.isArray(job_costs) || job_costs.length === 0) {
+            return next(new ErrorHandler("Job cost data is required for SKU level", 400));
+        }
+    }
+
+    try {
+        const functionName = isEdit ? 'update_job_cost_sku_or_product' : 'insert_job_cost';
+
+        const response = await sequelize.query(
+            `SELECT * FROM ${functionName}(
+                :job_id, 
+                :isskulevel, 
+                :sku_id, 
+                :rfq_id, 
+                :job_costs, 
+                :status
+            )`,
+            {
+                replacements: {
+                    job_id,
+                    isskulevel,
+                    sku_id,
+                    rfq_id,
+                    job_costs: JSON.stringify(job_costs),
+                    status
+                },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (!response[0]?.success) {
+            return next(new ErrorHandler(response[0]?.message ||
+                `Failed to ${isEdit ? 'update' : 'save'} job costs`, 400));
+        }
+
+        res.status(200).json({
+            success: true,
+            message: response[0].message ||
+                `Job costs ${isEdit ? 'updated' : 'saved'} successfully`
+        });
+
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+
+// const saveOrUpdateJobCost = catchAsyncError(async (req, res, next) => {
+//     const { job_id, isskulevel, sku_id, rfq_id, job_costs, status, isEdit = false } = req.body;
+
+//     // Validate required fields
+//     if (!job_id || isskulevel === undefined || !rfq_id || !job_costs || status === undefined) {
+//         return next(new ErrorHandler("Please provide all required fields: job_id, isskulevel, rfq_id, job_costs, status", 400));
+//     }
+
+//     try {
+//         // Format job_costs correctly based on level
+//         let formattedJobCosts;
+//         if (isskulevel) {
+//             // For SKU level, we expect a single cost object
+//             formattedJobCosts = Array.isArray(job_costs) ? job_costs : [job_costs];
+//         } else {
+//             // For product level, we expect an array of costs
+//             formattedJobCosts = Array.isArray(job_costs) ? job_costs : [];
+//         }
+
+//         const response = await sequelize.query(
+//             `SELECT * FROM ${isEdit ? 'update_job_cost_sku_or_product' : 'insert_job_cost'}(
+//                 :job_id, 
+//                 :isskulevel, 
+//                 :sku_id, 
+//                 :rfq_id, 
+//                 :job_costs, 
+//                 :status
+//             )`,
+//             {
+//                 replacements: {
+//                     job_id,
+//                     isskulevel,
+//                     sku_id,
+//                     rfq_id,
+//                     job_costs: JSON.stringify(formattedJobCosts),
+//                     status
+//                 },
+//                 type: sequelize.QueryTypes.SELECT
+//             }
+//         );
+
+//         if (!response[0]?.success) {
+//             return next(new ErrorHandler(response[0]?.message ||
+//                 `Failed to ${isEdit ? 'update' : 'save'} job costs`, 400));
+//         }
+
+//         res.status(200).json({
+//             success: true,
+//             message: response[0].message ||
+//                 `Job costs ${isEdit ? 'updated' : 'saved'} successfully`
+//         });
+
+//     } catch (error) {
+//         return next(new ErrorHandler(error.message, 500));
+//     }
+// });
+
+const getJobCostsByRfqAndSku = catchAsyncError(async (req, res, next) => {
+    const { rfqId, skuId } = req.params;
+
+    if (!rfqId || !skuId) {
+        return next(new ErrorHandler("RFQ ID and SKU ID are required", 400));
+    }
+
+    try {
+        const jobCosts = await sequelize.query(
+            `SELECT * FROM get_job_costs_by_rfq_and_sku(:rfqId, :skuId)`,
+            {
+                replacements: { rfqId, skuId },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        // Organize by job type if needed
+        const organizedData = {};
+        jobCosts.forEach(cost => {
+            if (!organizedData[cost.job_id]) {
+                organizedData[cost.job_id] = {
+                    job_id: cost.job_id,
+                    job_name: cost.job_name,
+                    costs: []
+                };
+            }
+            organizedData[cost.job_id].costs.push(cost);
+        });
+
+        res.status(200).json({
+            success: true,
+            data: Object.values(organizedData)
+        });
+
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+
+const deleteJobCostBySkuJobId = catchAsyncError(async (req, res, next) => {
+    const { jobId, skuId } = req.params;
+
+    if (!jobId || !skuId) {
+        return next(new ErrorHandler("Job ID and SKU ID are required", 400));
+    }
+
+    try {
+        const jobCosts = await sequelize.query(
+            `DELETE FROM job_sku_or_product_rtable WHERE sku_id = ${skuId} AND job_id = ${jobId};`
+        );
+
+
+        res.status(200).json({
+            success: true,
+            message: "Job cost deleted successfully",
+        });
+
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+
+const calculateSubTotalCost = catchAsyncError(async (req, res, next) => {
+    const { sku_id, rfq_id } = req.params;
+
+    if (!sku_id) return next(new ErrorHandler("Sku id is required.", 400));
+
+    if (!rfq_id) return next(new ErrorHandler("RFQ id is required.", 400));
+
+
+    const result = await sequelize.query(
+        `SELECT calculate_subtotal_cost_by_sku(:p_sku_id, :p_rfq_id) AS subtotal_cost;`,
+        {
+            replacements: {
+                p_sku_id: sku_id,
+                p_rfq_id: rfq_id
+            },
+            type: sequelize.QueryTypes.SELECT
+        }
+    );
+
+    console.log(result);
+
+    if (!result) return next(new ErrorHandler("Error calculating sub total cost.", 500));
+
+    res.status(200).json({
+        success: true,
+        message: "Sub total cost calculated successfully",
+        subtotal_cost: result[0].subtotal_cost
+    });
+});
 
 
 export {
@@ -382,5 +607,9 @@ export {
     updateAssemblyWeightBySkuid,
     editYieldPercbyProductId,
     editBomCostPerKgbyProductId,
-    editProductNetWeightProductId
+    editProductNetWeightProductId,
+    saveOrUpdateJobCost,
+    getJobCostsByRfqAndSku,
+    calculateSubTotalCost,
+    deleteJobCostBySkuJobId
 };

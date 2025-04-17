@@ -19,7 +19,7 @@ import plantRoute from "./route/plantRoute.js";
 import testRoute from "./route/testRoute.js";
 import authRoute from "./route/authRoute.js";
 import jobTypeRoute from "./route/jobTypeRoute.js";
-import otherCostRoute from "./route/otherCostModel.js";
+import otherCostRoute from "./route/otherCostRoute.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
