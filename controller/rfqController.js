@@ -8,6 +8,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { promisify } from 'util';
 import { State } from "../model/stateModel.js";
+import { Sequelize } from "sequelize";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -731,6 +732,35 @@ const autoCalculateCostsByRfqId = catchAsyncError(async (req, res, next) => {
 });
 
 
+const updateRfqState = catchAsyncError(async(req, res, next) => {
+    const {rfq_id, rfq_state} = req.body;
+
+    if(!rfq_id) return next(new ErrorHandler("Please provide RFQ id", 400));
+    if(!rfq_state) return next(new ErrorHandler("Please provide RFQ state", 400));
+
+    const response = await sequelize.query(
+        `SELECT * FROM update_rfq_state(:p_rfq_id, :p_rfq_state_id)`,
+        {
+            replacements: {
+                p_rfq_id: rfq_id,
+                p_rfq_state_id: rfq_state
+            },
+            type: sequelize.QueryTypes.SELECT
+        }
+    );
+
+    console.log("HJSAJSNJ REsponse: ", response);
+
+    if(!response[0]) return next(new ErrorHandler("No response from database operation", 500));
+    if(!response[0].success) return next(new ErrorHandler(response.message, 400));
+
+    res.status(200).json({
+        success: true,
+        message: response[0].message,
+    });
+}); 
+
+
 export {
     saveRFQandSKUdata,
     getRFQDetail,
@@ -744,5 +774,6 @@ export {
     assignRFQtoUser,
     rejectRFQwithState,
     getRFQDetailByUserRole,
-    autoCalculateCostsByRfqId
+    autoCalculateCostsByRfqId,
+    updateRfqState
 };
