@@ -54,7 +54,7 @@ const getOtherCost = catchAsyncError(async (req, res, next) => {
 
 
 const editOtherCost = catchAsyncError(async (req, res, next) => {
-    const { id } = res.params;
+    const { id } = req.params;
     const { cost_name, status } = req.body;
 
     if (!id) return next(new ErrorHandler("Other cost id is required.", 400));
