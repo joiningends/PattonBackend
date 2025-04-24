@@ -683,6 +683,69 @@ const assignRFQtoUser = catchAsyncError(async (req, res, next) => {
     }
 });
 
+// Assign RFQ to multiple users/roles
+// const assignRFQtoUser = catchAsyncError(async (req, res, next) => {
+//     try {
+//         const {
+//             p_rfq_id,
+//             p_assigned_to_ids, // Now an array of user IDs
+//             p_assigned_to_roles, // Now an array of role IDs
+//             p_assigned_by_id,
+//             p_assigned_by_roleid,
+//             p_status,
+//             p_comments
+//         } = req.body;
+
+//         // Validate required fields
+//         if (!p_rfq_id || !p_assigned_to_ids || !p_assigned_to_roles || 
+//             !p_assigned_by_id || !p_assigned_by_roleid || !p_comments || 
+//             p_status === undefined) {
+//             return next(new ErrorHandler("Please fill all required fields", 400));
+//         }
+
+//         // Ensure arrays are of same length
+//         if (p_assigned_to_ids.length !== p_assigned_to_roles.length) {
+//             return next(new ErrorHandler("Assigned user IDs and roles arrays must be of same length", 400));
+//         }
+
+//         // Call the PostgreSQL procedure for each assignment
+//         const assignments = [];
+//         for (let i = 0; i < p_assigned_to_ids.length; i++) {
+//             const result = await sequelize.query(
+//                 'CALL public.rfq_assign(:p_rfq_id, :p_assigned_to_id, :p_assigned_to_roleid, :p_assigned_by_id, :p_assigned_by_roleid, :p_status, :p_comments)',
+//                 {
+//                     replacements: {
+//                         p_rfq_id,
+//                         p_assigned_to_id: p_assigned_to_ids[i],
+//                         p_assigned_to_roleid: p_assigned_to_roles[i],
+//                         p_assigned_by_id,
+//                         p_assigned_by_roleid,
+//                         p_status,
+//                         p_comments
+//                     },
+//                     type: sequelize.QueryTypes.RAW
+//                 }
+//             );
+//             assignments.push({
+//                 userId: p_assigned_to_ids[i],
+//                 roleId: p_assigned_to_roles[i],
+//                 result: result
+//             });
+//         }
+
+//         // Success response
+//         res.status(200).json({
+//             success: true,
+//             message: 'RFQ assigned successfully to all recipients',
+//             assignments: assignments
+//         });
+
+//     } catch (error) {
+//         console.log("Error details: ", error);
+//         next(new ErrorHandler("Internal server error", 500));
+//     }
+// });
+
 
 const rejectRFQwithState = catchAsyncError(async (req, res, next) => {
     const { p_rfq_id, p_user_id, p_comments, p_state_id } = req.body;
@@ -732,11 +795,11 @@ const autoCalculateCostsByRfqId = catchAsyncError(async (req, res, next) => {
 });
 
 
-const updateRfqState = catchAsyncError(async(req, res, next) => {
-    const {rfq_id, rfq_state} = req.body;
+const updateRfqState = catchAsyncError(async (req, res, next) => {
+    const { rfq_id, rfq_state } = req.body;
 
-    if(!rfq_id) return next(new ErrorHandler("Please provide RFQ id", 400));
-    if(!rfq_state) return next(new ErrorHandler("Please provide RFQ state", 400));
+    if (!rfq_id) return next(new ErrorHandler("Please provide RFQ id", 400));
+    if (!rfq_state) return next(new ErrorHandler("Please provide RFQ state", 400));
 
     const response = await sequelize.query(
         `SELECT * FROM update_rfq_state(:p_rfq_id, :p_rfq_state_id)`,
@@ -749,16 +812,66 @@ const updateRfqState = catchAsyncError(async(req, res, next) => {
         }
     );
 
-    console.log("HJSAJSNJ REsponse: ", response);
 
-    if(!response[0]) return next(new ErrorHandler("No response from database operation", 500));
-    if(!response[0].success) return next(new ErrorHandler(response.message, 400));
+    if (!response[0]) return next(new ErrorHandler("No response from database operation", 500));
+    if (!response[0].success) return next(new ErrorHandler(response.message, 400));
 
     res.status(200).json({
         success: true,
         message: response[0].message,
     });
-}); 
+});
+
+const insertFactoryOverheadCost = catchAsyncError(async (req, res, next) => {
+    const { rfq_id, factory_overhead_perc } = req.body;
+
+    if (!rfq_id) return next(new ErrorHandler("Rfq id is required.", 400));
+
+    if (!factory_overhead_perc) return next(new ErrorHandler("Factory overhead percent is required.", 400));
+
+    const response = await sequelize.query(
+        `SELECT * FROM update_sku_factory_overhead_cost(:p_rfq_id, :p_factory_overhead_perc);`,
+        {
+            replacements: {
+                p_rfq_id: rfq_id,
+                p_factory_overhead_perc: factory_overhead_perc
+            },
+            type: sequelize.QueryTypes.SELECT
+        }
+    );
+
+    if (!response[0]) return next(new ErrorHandler("No response from database operation", 500));
+    if (!response[0].success) return next(new ErrorHandler(response.message, 400));
+
+    res.status(200).json({
+        success: true,
+        message: response[0].message,
+    });
+});
+
+const insertTotalFactoryCost = catchAsyncError(async (req, res, next) => {
+    const { rfqid } = req.params;
+
+    if (!rfqid) return next(new ErrorHandler("Rfq id is required.", 400));
+
+    const response = await sequelize.query(
+        `SELECT * FROM calculate_total_factory_cost_by_rfqid(:p_rfq_id);`,
+        {
+            replacements: {
+                p_rfq_id: rfqid,
+            },
+            type: sequelize.QueryTypes.SELECT
+        }
+    );
+
+    if (!response[0]) return next(new ErrorHandler("No response from database operation", 500));
+    if (!response[0].success) return next(new ErrorHandler(response.message, 400));
+
+    res.status(200).json({
+        success: true,
+        message: response[0].message,
+    });
+});
 
 
 export {
@@ -775,5 +888,7 @@ export {
     rejectRFQwithState,
     getRFQDetailByUserRole,
     autoCalculateCostsByRfqId,
-    updateRfqState
+    updateRfqState,
+    insertFactoryOverheadCost,
+    insertTotalFactoryCost
 };

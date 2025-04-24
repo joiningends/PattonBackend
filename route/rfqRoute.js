@@ -1,5 +1,5 @@
 import express from "express";
-import { approveOrRejectRFQ, assignRFQtoUser, autoCalculateCostsByRfqId, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDetailByUserRole, getRFQDocuments, getStatesOfRFQ, rejectRFQwithState, saveRFQandSKUdata, updateRfqState, uploadRFQDocuments } from "../controller/rfqController.js";
+import { approveOrRejectRFQ, assignRFQtoUser, autoCalculateCostsByRfqId, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDetailByUserRole, getRFQDocuments, getStatesOfRFQ, insertFactoryOverheadCost, insertTotalFactoryCost, rejectRFQwithState, saveRFQandSKUdata, updateRfqState, uploadRFQDocuments } from "../controller/rfqController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -22,11 +22,15 @@ router.post("/approve", approveOrRejectRFQ);                // Approve or reject
 router.get("/states/", authenticateUser, getStatesOfRFQ);           // fetch all state
 router.get("/states/:id", authenticateUser, getStatesOfRFQ);        // fetch state by id
 
-
+// Assing reject RFQ
 router.post("/assign/", authenticateUser, assignRFQtoUser);                     // Assign rfq to user
 router.post("/reject/", authenticateUser, rejectRFQwithState);    // Reject rfq by plant head
 
 router.post("/auto-calculate/", authenticateUser, autoCalculateCostsByRfqId);
 router.post("/update/rfq-state/", authenticateUser, updateRfqState);
+
+// Factory overhead 
+router.post("/save-factory-overhead/", authenticateUser, insertFactoryOverheadCost);
+router.get("/calculate/total-factory-cost/:rfqid", authenticateUser, insertTotalFactoryCost);
 
 export default router;
