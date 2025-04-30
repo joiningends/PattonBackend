@@ -163,6 +163,7 @@ const processRFQResults = (results) => {
             RFQMap.set(row.rfq_id, {
                 rfq_id: row.rfq_id,
                 rfq_name: row.rfq_name,
+                rfq_status: row.rfq_status,
                 user_id: row.user_id,
                 role_id: row.role_id,
                 client_id: row.client_id,
@@ -206,7 +207,22 @@ const processRFQResults = (results) => {
 };
 
 
+const updateRFQStatus = catchAsyncError(async (req, res, next) => {
+    const {rfqid, status} = req.params;
 
+    if(!rfqid) return next(new ErrorHandler("RFQ id is required.", 400));
+
+    if(!status) return next(new ErrorHandler("RFQ status is required.", 400));
+
+    const result = await sequelize.query(
+        `UPDATE rfq_table SET status=${status} WHERE id=${rfqid}`
+    );
+
+    res.status(200).json({
+        success: true,
+        message: "RFQ status updated successfully."
+    });
+});
 
 
 // create upload directory if it doesn't exist
@@ -441,6 +457,8 @@ const downloadRFQDocument = catchAsyncError(async (req, res, next) => {
             return next(new ErrorHandler('File not found on server', 404));
         }
 
+        console.log(document);
+
         res.setHeader('Content-Type', document.mime_type);
         res.setHeader('Content-Disposition', `attachment; filename="${document.original_name}"`);
 
@@ -544,10 +562,9 @@ const deleteRFQDocumentPermanently = catchAsyncError(async (req, res, next) => {
 
 
 // Approve rfq and send to plant
-// Approve rfq and send to plant
 const approveOrRejectRFQ = catchAsyncError(async (req, res, next) => {
     try {
-        const { rfq_id, user_id, state_id, plant_id, comments } = req.body;
+        const { rfq_id, user_id, state_id, plant_ids, comments } = req.body;
 
         // Validate required fields
         if (!rfq_id || !user_id || state_id === undefined) {
@@ -555,34 +572,54 @@ const approveOrRejectRFQ = catchAsyncError(async (req, res, next) => {
         }
 
         // Validate state_id and corresponding parameters
-        if (state_id === 2 && !plant_id) {
-            return next(new ErrorHandler("Plant ID is required when approving an RFQ", 400));
+        if (state_id === 2 && (!plant_ids || plant_ids.length === 0)) {
+            return next(new ErrorHandler("At least one Plant ID is required when approving an RFQ", 400));
         }
 
         if (state_id === 0 && !comments) {
             return next(new ErrorHandler("Comments are required when rejecting an RFQ", 400));
         }
 
-        // Calling the stored procedure
-        await sequelize.query(
-            'CALL approve_rfq_send_plant(:p_rfq_id, :p_user_id, :p_state_id, :p_plant_id, :p_comments)',
-            {
-                replacements: {
-                    p_rfq_id: rfq_id,
-                    p_user_id: user_id,
-                    p_state_id: state_id,
-                    p_plant_id: plant_id,
-                    p_comments: comments
-                },
-                type: sequelize.QueryTypes.RAW
+        // For approval with multiple plants
+        if (state_id === 2 && plant_ids && plant_ids.length > 0) {
+            // Process each plant assignment
+            for (const plant_id of plant_ids) {
+                await sequelize.query(
+                    'CALL approve_rfq_send_plant(:p_rfq_id, :p_user_id, :p_state_id, :p_plant_id, :p_comments)',
+                    {
+                        replacements: {
+                            p_rfq_id: rfq_id,
+                            p_user_id: user_id,
+                            p_state_id: state_id,
+                            p_plant_id: plant_id,
+                            p_comments: comments
+                        },
+                        type: sequelize.QueryTypes.RAW
+                    }
+                );
             }
-        );
+        } else {
+            // For rejection or single plant approval (backward compatibility)
+            await sequelize.query(
+                'CALL approve_rfq_send_plant(:p_rfq_id, :p_user_id, :p_state_id, :p_plant_id, :p_comments)',
+                {
+                    replacements: {
+                        p_rfq_id: rfq_id,
+                        p_user_id: user_id,
+                        p_state_id: state_id,
+                        p_plant_id: plant_ids ? plant_ids[0] : null, // First plant if array, null otherwise
+                        p_comments: comments
+                    },
+                    type: sequelize.QueryTypes.RAW
+                }
+            );
+        }
 
         // Prepare response message based on action
         const actionMessage = state_id === 2
             ? comments
-                ? "approved with comments and assigned to plant"
-                : "approved and assigned to plant"
+                ? `approved with comments and assigned to ${plant_ids.length} plant(s)`
+                : `approved and assigned to ${plant_ids.length} plant(s)`
             : "rejected";
 
         res.status(200).json({
@@ -874,6 +911,49 @@ const insertTotalFactoryCost = catchAsyncError(async (req, res, next) => {
 });
 
 
+// Assign RFQ to a user
+const insertCommentsForRFQ = catchAsyncError(async (req, res, next) => {
+    try {
+        const {
+            user_id,
+            rfq_id,
+            state_id,
+            comments
+        } = req.body;
+
+        // Validate required fields
+        if (!rfq_id || !user_id || !state_id || !comments) {
+            return next(new ErrorHandler("Please fill all required fields", 400));
+        }
+
+        // Call the PostgreSQL procedure
+        const result = await sequelize.query(
+            'CALL public.insert_comments(:p_user_id, :p_rfq_id, :p_state_id, :p_comments)',
+            {
+                replacements: {
+                    p_user_id: user_id,
+                    p_rfq_id: rfq_id,
+                    p_state_id: state_id,
+                    p_comments: comments
+                },
+                type: sequelize.QueryTypes.RAW
+            }
+        );
+
+        // Success response
+        res.status(200).json({
+            success: true,
+            message: 'Comments inserted successfully',
+            // data: result
+        });
+
+    } catch (error) {
+        console.log("Error details: ", error);
+        next(new ErrorHandler("Internal server error", 500));
+    }
+});
+
+
 export {
     saveRFQandSKUdata,
     getRFQDetail,
@@ -890,5 +970,7 @@ export {
     autoCalculateCostsByRfqId,
     updateRfqState,
     insertFactoryOverheadCost,
-    insertTotalFactoryCost
+    insertTotalFactoryCost,
+    insertCommentsForRFQ,
+    updateRFQStatus
 };
