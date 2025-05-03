@@ -1,11 +1,12 @@
 import express from "express";
-import { approveOrRejectRFQ, assignRFQtoUser, autoCalculateCostsByRfqId, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDetailByUserRole, getRFQDocuments, getStatesOfRFQ, insertCommentsForRFQ, insertFactoryOverheadCost, insertTotalFactoryCost, rejectRFQwithState, saveRFQandSKUdata, updateRfqState, updateRFQStatus, uploadRFQDocuments } from "../controller/rfqController.js";
+import { approveOrRejectRFQ, assignRFQtoUser, autoCalculateCostsByRfqId, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDetailByUserRole, getRFQDocuments, getRFQforPlantHead, getStatesOfRFQ, insertCommentsForRFQ, insertFactoryOverheadCost, insertTotalFactoryCost, rejectRFQwithState, saveRFQandSKUdata, updateRfqState, updateRFQStatus, uploadRFQDocuments } from "../controller/rfqController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 router.post('/saverfq', saveRFQandSKUdata);         // Save rfq
 router.post("/getrfq", getRFQDetail);               // fetch rfq
+router.post("/getrfq-planthead", authenticateUser, getRFQforPlantHead);               // fetch rfq
 router.get("/update-rfq/status/:rfqid/:status", authenticateUser, updateRFQStatus);
 router.get("/getrfqbyuserrole/:user_id", getRFQDetailByUserRole);
 

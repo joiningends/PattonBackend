@@ -65,6 +65,8 @@ const getRFQDetail = catchAsyncError(async (req, res, next) => {
         console.log("user_id: ", p_user_id);
         console.log("role_id: ", p_role_id);
 
+        if(!p_user_id) return next(new ErrorHandler("User id is required.", 400));
+
         // Query the function using raw SQL
         const query = `SELECT * FROM get_rfq(:p_user_id, :p_rfq_id, :p_client_id);`;
 
@@ -72,7 +74,7 @@ const getRFQDetail = catchAsyncError(async (req, res, next) => {
 
         const rfqData = await sequelize.query(query, {
             replacements: {
-                p_user_id: p_role_id === 8 ? null : p_user_id,
+                p_user_id: p_user_id,
                 p_rfq_id: p_rfq_id || null,
                 p_client_id: p_client_id || null
             },
@@ -95,6 +97,34 @@ const getRFQDetail = catchAsyncError(async (req, res, next) => {
         next(new ErrorHandler("Internal server error", 500));
     }
 });
+
+
+const getRFQforPlantHead = catchAsyncError(async (req, res, next) => {
+    const {p_user_id, p_rfq_id, p_client_id} = req.body;
+
+    if(!p_user_id) return next(new ErrorHandler("User id is required", 400));
+
+    const rfqData = await sequelize.query(`SELECT * FROM get_rfq_for_planthead(:p_user_id, :p_rfq_id, :p_client_id);`, {
+        replacements: {
+            p_user_id: p_user_id,
+            p_rfq_id: p_rfq_id,
+            p_client_id: p_client_id,
+        },
+        type: sequelize.QueryTypes.SELECT,
+    });
+
+    if (!rfqData || rfqData.length === 0) {
+        return next(new ErrorHandler("No RFQ data found", 404));
+    }
+
+    // Process the results to group skus
+    const processedResults = processRFQResults(rfqData);
+
+    res.status(200).json({
+        success: true,
+        data: processedResults, // Send the array of RFQ details
+    });
+})
 
 
 const getRFQDetailByUserRole = catchAsyncError(async (req, res, next) => {
@@ -957,6 +987,7 @@ const insertCommentsForRFQ = catchAsyncError(async (req, res, next) => {
 export {
     saveRFQandSKUdata,
     getRFQDetail,
+    getRFQforPlantHead,
     uploadRFQDocuments,
     getRFQDocuments,
     downloadRFQDocument,

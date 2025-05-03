@@ -351,25 +351,25 @@ const mapUserWithRole = catchAsyncError(async (req, res, next) => {
 
 
 const getNpdEngineer = catchAsyncError(async (req, res, next) => {
-    const { rfq_id } = req.params;
+    const { p_user_id } = req.params;
 
     // Validate if rfq_id is provided
-    if (!rfq_id) {
-        return next(new ErrorHandler('RFQ ID is required', 400));
+    if (!p_user_id) {
+        return next(new ErrorHandler('User ID is required', 400));
     }
 
     // Query to call the PostgreSQL function
-    const query = `SELECT * FROM get_npd_engineers(:p_rfq_id);`;
+    const query = `SELECT * FROM get_npd_engineers(:p_user_id);`;
 
     // Execute the query using Sequelize
     const npdEngineerData = await sequelize.query(query, {
-        replacements: { p_rfq_id: rfq_id },
+        replacements: { p_user_id: p_user_id },
         type: sequelize.QueryTypes.SELECT,
     });
 
     // Check if data is found
     if (!npdEngineerData || npdEngineerData.length === 0) {
-        return next(new ErrorHandler('No NPD engineer data found for the given RFQ ID', 404));
+        return next(new ErrorHandler('No NPD engineer data found for the given user ID', 404));
     }
 
     // Send the response
@@ -384,22 +384,22 @@ const getNpdEngineer = catchAsyncError(async (req, res, next) => {
 
 const getVendorEngineer = catchAsyncError(async (req, res, next) => {
     try {
-        const { rfq_id } = req.params;
+        const { p_user_id } = req.params;
 
-        if (!rfq_id) return next(new ErrorHandler("RFQ Id is required.", 400));
+        if (!p_user_id) return next(new ErrorHandler("User Id is required.", 400));
 
         const vendorEngineerData = await sequelize.query(
-            `SELECT * FROM get_vendor_eng(:p_rfq_id);`,
+            `SELECT * FROM get_vendor_eng(:p_user_id);`,
             {
                 replacements: {
-                    p_rfq_id: rfq_id
+                    p_user_id: p_user_id
                 },
                 type: sequelize.QueryTypes.SELECT,
             }
         );
 
         if (!vendorEngineerData || vendorEngineerData.length === 0) {
-            return next(new ErrorHandler("No vendor development engineer data found for the given RFQ id.", 404));
+            return next(new ErrorHandler("No vendor development engineer data found for the given user id.", 404));
         }
 
         res.status(200).json({
@@ -417,22 +417,22 @@ const getVendorEngineer = catchAsyncError(async (req, res, next) => {
 
 const getProcessEngineer = catchAsyncError(async (req, res, next) => {
     
-    const { rfq_id } = req.params;
+    const { p_user_id } = req.params;
 
-    if (!rfq_id) return next(new ErrorHandler("RFQ id is required.", 400));
+    if (!p_user_id) return next(new ErrorHandler("User id is required.", 400));
 
     const processEngineerData = await sequelize.query(
-        `SELECT * FROM get_process_eng(:p_rfq_id);`,
+        `SELECT * FROM get_process_eng(:p_user_id);`,
         {
             replacements: {
-                p_rfq_id: rfq_id
+                p_user_id: p_user_id
             },
             type: sequelize.QueryTypes.SELECT,
         }
     );
 
     if(!processEngineerData || processEngineerData.length === 0) {
-        return next(new ErrorHandler("No process engineer data found for the given RFQ id", 404));
+        return next(new ErrorHandler("No process engineer data found for the given User id", 404));
     }
 
     res.status(200).json({
@@ -440,6 +440,32 @@ const getProcessEngineer = catchAsyncError(async (req, res, next) => {
         message: "Process engineer fetched successfully",
         data: processEngineerData
     });
+
+})
+
+const getAllengineerByplantHeadId = catchAsyncError(async (req, res, next) => {
+    const {p_user_id} = req.params;
+
+    if(!p_user_id) return next(new ErrorHandler("User id is required", 400));
+
+    const allEngineerData = await sequelize.query(
+        `SELECT * FROM get_engineers_by_planthead(:p_user_id);`, {
+            replacements: {
+                p_user_id: p_user_id
+            },
+            type: sequelize.QueryTypes.SELECT,
+        }
+    );
+
+    if(!allEngineerData || allEngineerData.length === 0) {
+        return next(new ErrorHandler("No engineers found."));
+    };
+
+    res.status(200).json({
+        success: true,
+        message: "All engineers fetched successfully",
+        data: allEngineerData
+    })
 
 })
 
@@ -456,5 +482,6 @@ export {
     getUserRoleDataByUserId,
     getNpdEngineer,
     getVendorEngineer,
-    getProcessEngineer
+    getProcessEngineer,
+    getAllengineerByplantHeadId
 };
