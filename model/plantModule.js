@@ -17,18 +17,18 @@ export const Plant = sequelize.define("Plant", {
         type: DataTypes.INTEGER,
         allowNull: true
     },
-    process_engineer: {
-        type: DataTypes.INTEGER,
-        allowNull: true
-    },
-    npd_engineer: {
-        type: DataTypes.INTEGER,
-        allowNull: true
-    },
-    vendor_development_engineer: {
-        type: DataTypes.INTEGER,
-        allowNull: true
-    },
+    // process_engineer: {
+    //     type: DataTypes.INTEGER,
+    //     allowNull: true
+    // },
+    // npd_engineer: {
+    //     type: DataTypes.INTEGER,
+    //     allowNull: true
+    // },
+    // vendor_development_engineer: {
+    //     type: DataTypes.INTEGER,
+    //     allowNull: true
+    // },
     address1: {
         type: DataTypes.STRING(655),
         allowNull: true
