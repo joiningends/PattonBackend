@@ -864,7 +864,6 @@ const autoCalculateCostsByRfqId = catchAsyncError(async (req, res, next) => {
 
 const updateRfqState = catchAsyncError(async (req, res, next) => {
     const { rfq_id, rfq_state } = req.body;
-
     if (!rfq_id) return next(new ErrorHandler("Please provide RFQ id", 400));
     if (!rfq_state) return next(new ErrorHandler("Please provide RFQ state", 400));
 

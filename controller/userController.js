@@ -443,6 +443,23 @@ const getProcessEngineer = catchAsyncError(async (req, res, next) => {
 
 })
 
+
+const getCommercialTeam = catchAsyncError(async (req, res, next) => {
+    
+    const [commercialTeamData] = await sequelize.query(`SELECT * FROM get_commercial_team()`);
+
+    if(!commercialTeamData || commercialTeamData.length === 0) {
+        return next(new ErrorHandler("Commercial team data not found", 404));
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Commercial team data fetched successfully",
+        data: commercialTeamData
+    });
+
+});
+
 const getAllengineerByplantHeadId = catchAsyncError(async (req, res, next) => {
     const {p_user_id} = req.params;
 
@@ -483,5 +500,6 @@ export {
     getNpdEngineer,
     getVendorEngineer,
     getProcessEngineer,
-    getAllengineerByplantHeadId
+    getAllengineerByplantHeadId,
+    getCommercialTeam
 };
