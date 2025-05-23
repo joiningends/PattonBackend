@@ -20,6 +20,7 @@ import testRoute from "./route/testRoute.js";
 import authRoute from "./route/authRoute.js";
 import jobTypeRoute from "./route/jobTypeRoute.js";
 import otherCostRoute from "./route/otherCostRoute.js";
+import currencyRoute from "./route/currencyRoute.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -50,6 +51,7 @@ app.use("/api/plant", plantRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/job-type", jobTypeRoute);
 app.use("/api/other-cost", otherCostRoute);
+app.use("/api/currency", currencyRoute);
 
 //testing 
 app.use(testRoute);

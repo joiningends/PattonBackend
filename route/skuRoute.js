@@ -1,5 +1,5 @@
 import express from "express";
-import { calculateSubTotalCost, deleteJobCostBySkuJobId, deleteProductById, editBomCostPerKgbyProductId, editBomCostPerkgByProductId, editNetWeightOfProductByProductId, editProductNetWeightProductId, editYieldPercbyProductId, editYieldPercentageByProductId, getJobCostsByRfqAndSku, getProductsBySKUId, getSKUbyRFQid, saveBOMProductswithSKUdetails, saveOrUpdateJobCost, saveProductswithSKUdetails, updateAssemblyWeightBySkuid } from "../controller/skuController.js";
+import { calculateSubTotalCost, deleteJobCostBySkuJobId, deleteProductById, editBomCostPerKgbyProductId, editBomCostPerkgByProductId, editNetWeightOfProductByProductId, editProductNetWeightProductId, editYieldPercbyProductId, editYieldPercentageByProductId, getJobCostsByRfqAndSku, getProductsBySKUId, getSKUbyRFQid, reCalculateCifValue, saveAllCostsAndCalculateCIF, saveBOMProductswithSKUdetails, saveCalculateOverheadPercentage, saveMarginAndCalculateTotalCost, saveOrUpdateJobCost, saveProductswithSKUdetails, setClientCurrencyCost, updateAssemblyWeightBySkuid } from "../controller/skuController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 
@@ -22,5 +22,11 @@ router.post("/job-cost", authenticateUser, saveOrUpdateJobCost);
 router.get("/fetch/job-cost/:rfqId/:skuId", authenticateUser, getJobCostsByRfqAndSku);
 router.get("/calculate/sub-total-cost/:sku_id/:rfq_id", authenticateUser, calculateSubTotalCost);
 router.delete("/delete/job-cost/:jobId/:skuId", authenticateUser, deleteJobCostBySkuJobId);
+router.post("/overhead/value", authenticateUser, saveCalculateOverheadPercentage);
+router.post("/freight-insurance/cal-cif", authenticateUser, saveAllCostsAndCalculateCIF);
+router.post("/margin/total-cost", authenticateUser, saveMarginAndCalculateTotalCost);
+router.post("/client-currency/cost", authenticateUser, setClientCurrencyCost);
+router.get("/recalculate/cif/:p_sku_id", authenticateUser, reCalculateCifValue);
+// router.get("/recalculate/factory-overhead", authenticateUser, calculateFactoryOverheadCost);
 
 export default router;

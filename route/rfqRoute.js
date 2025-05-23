@@ -18,7 +18,7 @@ router.delete("/:documentId/docdelete", authenticateUser, deleteRFQDocument);
 router.delete("/:documentId/docdelete/permanent", authenticateUser, deleteRFQDocumentPermanently);
 
 // Approve RFQ and assign to plant
-router.post("/approve", authenticateUser, approveOrRejectRFQ);                        // Approve or reject rfq
+router.post("/approve", authenticateUser, approveOrRejectRFQ);      // Approve or reject rfq
 
 // Get state
 router.get("/states/", authenticateUser, getStatesOfRFQ);           // fetch all state

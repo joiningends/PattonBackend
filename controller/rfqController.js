@@ -65,7 +65,7 @@ const getRFQDetail = catchAsyncError(async (req, res, next) => {
         console.log("user_id: ", p_user_id);
         console.log("role_id: ", p_role_id);
 
-        if(!p_user_id) return next(new ErrorHandler("User id is required.", 400));
+        // if(!p_user_id) return next(new ErrorHandler("User id is required.", 400));
 
         // Query the function using raw SQL
         const query = `SELECT * FROM get_rfq(:p_user_id, :p_rfq_id, :p_client_id);`;
@@ -1000,7 +1000,7 @@ export {
     autoCalculateCostsByRfqId,
     updateRfqState,
     insertFactoryOverheadCost,
-    insertTotalFactoryCost,
+    insertTotalFactoryCost,  
     insertCommentsForRFQ,
     updateRFQStatus
 };
