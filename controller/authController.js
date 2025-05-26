@@ -4,7 +4,7 @@ import { User } from "../model/userModel.js";
 import ErrorHandler from "../util/ErrorHandler.js";
 import { sequelize } from "../config/connectDB.js";
 import jwt from 'jsonwebtoken';
-import { sendEmailVerification } from "./emailController.js";
+import { sendEmail } from "./emailController.js";
 
 
 
@@ -160,7 +160,7 @@ const resetPasswordMail = catchAsyncError(async (req, res, next) => {
     const user = process.env.EMAIL_USER;
     const pass = process.env.EMAIL_PASSWORD;
 
-    await sendEmailVerification(user, pass, email, subject, emailContent);
+    await sendEmail(user, pass, email, subject, emailContent);
 
     res.status(201).json({
         success: true,

@@ -7,7 +7,7 @@ import { sequelize } from "../config/connectDB.js";
 import crypto from "crypto";
 import { Verification } from "../model/emailVerificationModel.js";
 import nodemailer from "nodemailer";
-import { sendEmailVerification } from "./emailController.js";
+import { sendEmail } from "./emailController.js";
 
 
 // Generate random numbers
@@ -121,7 +121,7 @@ const sendEmailVerificationMail = catchAsyncError(async (req, res, next) => {
     const user = process.env.EMAIL_USER;
     const pass = process.env.EMAIL_PASSWORD;
 
-    await sendEmailVerification(user, pass, userDetails.email, subject, emailContent);
+    await sendEmail(user, pass, userDetails.email, subject, emailContent);
 
     res.status(201).json({
         success: true,
