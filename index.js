@@ -21,6 +21,8 @@ import authRoute from "./route/authRoute.js";
 import jobTypeRoute from "./route/jobTypeRoute.js";
 import otherCostRoute from "./route/otherCostRoute.js";
 import currencyRoute from "./route/currencyRoute.js";
+import emailConfigRoute from "./route/emailRoute.js";
+import emailTemplateRoute from "./route/emailTemplateRoute.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -52,6 +54,8 @@ app.use("/api/auth", authRoute);
 app.use("/api/job-type", jobTypeRoute);
 app.use("/api/other-cost", otherCostRoute);
 app.use("/api/currency", currencyRoute);
+app.use("/api/email-config", emailConfigRoute);
+app.use("/api/email-template", emailTemplateRoute);
 
 //testing 
 app.use(testRoute);
