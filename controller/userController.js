@@ -416,7 +416,7 @@ const getVendorEngineer = catchAsyncError(async (req, res, next) => {
 
 
 const getProcessEngineer = catchAsyncError(async (req, res, next) => {
-    
+
     const { p_user_id } = req.params;
 
     if (!p_user_id) return next(new ErrorHandler("User id is required.", 400));
@@ -431,7 +431,7 @@ const getProcessEngineer = catchAsyncError(async (req, res, next) => {
         }
     );
 
-    if(!processEngineerData || processEngineerData.length === 0) {
+    if (!processEngineerData || processEngineerData.length === 0) {
         return next(new ErrorHandler("No process engineer data found for the given User id", 404));
     }
 
@@ -445,10 +445,10 @@ const getProcessEngineer = catchAsyncError(async (req, res, next) => {
 
 
 const getCommercialTeam = catchAsyncError(async (req, res, next) => {
-    
+
     const [commercialTeamData] = await sequelize.query(`SELECT * FROM get_commercial_team()`);
 
-    if(!commercialTeamData || commercialTeamData.length === 0) {
+    if (!commercialTeamData || commercialTeamData.length === 0) {
         return next(new ErrorHandler("Commercial team data not found", 404));
     }
 
@@ -461,20 +461,20 @@ const getCommercialTeam = catchAsyncError(async (req, res, next) => {
 });
 
 const getAllengineerByplantHeadId = catchAsyncError(async (req, res, next) => {
-    const {p_user_id} = req.params;
+    const { p_user_id } = req.params;
 
-    if(!p_user_id) return next(new ErrorHandler("User id is required", 400));
+    if (!p_user_id) return next(new ErrorHandler("User id is required", 400));
 
     const allEngineerData = await sequelize.query(
         `SELECT * FROM get_engineers_by_planthead(:p_user_id);`, {
-            replacements: {
-                p_user_id: p_user_id
-            },
-            type: sequelize.QueryTypes.SELECT,
-        }
+        replacements: {
+            p_user_id: p_user_id
+        },
+        type: sequelize.QueryTypes.SELECT,
+    }
     );
 
-    if(!allEngineerData || allEngineerData.length === 0) {
+    if (!allEngineerData || allEngineerData.length === 0) {
         return next(new ErrorHandler("No engineers found."));
     };
 
@@ -485,6 +485,71 @@ const getAllengineerByplantHeadId = catchAsyncError(async (req, res, next) => {
     })
 
 })
+
+const getAccountManagerByRFQid = catchAsyncError(async (req, res, next) => {
+    const { rfq_id } = req.params;
+
+    if (rfq_id) return next(new ErrorHandler("RFQ ID is required.", 400));
+
+    const response = await sequelize.query(
+        `SELECT ut.id, ut.username, ut.email FROM user_table ut
+        INNER JOIN rfq_table rt ON rt.user_id = ut.id
+        WHERE rt.id = ${rfq_id}`
+    );
+
+    if (!response) return next(new ErrorHandler("Account manager not found for the given RFQ id.", 404));
+
+    res.status(200).json({
+        success: true,
+        message: "Account manager fetched successfully.",
+        data: response[0]
+    });
+});
+
+
+const getPlantHeadByengineer = catchAsyncError(async (req, res, next) => {
+    const { engId } = req.params;
+
+    if (!engId) return next(new ErrorHandler("Engineer Id is required.", 400));
+
+    const query = `SELECT ut.first_name, ut.last_name, ut.email FROM plant_engineer_map_table pet
+                JOIN plant_table pt ON pt.id = pet.plant_id
+                JOIN user_table ut ON ut.id = pt.plant_head
+                WHERE pet.user_id = ${engId} AND
+                pet.status = true AND
+                pt.status = true AND
+                ut.status = true`;
+
+    const response = await sequelize.query(query);
+
+    if(!response) return next(new ErrorHandler("Plant head not found.", 404));
+
+    res.status(200).json({
+        success: true,
+        message: "Plant head fetched successfully.",
+        data: response[0]
+    });
+});
+
+const getCommercialManager = catchAsyncError(async(req, res, next) => {
+    const {roleId} = req.params;    // commercial manager roleId
+
+    if(!roleId) return next(new ErrorHandler("Commercial manager roleId is required.", 400));
+
+    const query = `SELECT ut.id, ut.email, ut.first_name, ut.last_name FROM user_role_rtable urt
+                JOIN user_table ut ON ut.id = urt.user_id
+                WHERE role_id = ${roleId}`;
+
+    const response = await sequelize.query(query);
+
+    if(!response) return next(new ErrorHandler("Commercial manager not found.", 404));
+
+    res.status(200).json({
+        success: true,
+        message: "Commercial manager fetched successfully",
+        data: response
+    })
+});
 
 
 export {
@@ -501,5 +566,8 @@ export {
     getVendorEngineer,
     getProcessEngineer,
     getAllengineerByplantHeadId,
-    getCommercialTeam
+    getCommercialTeam,
+    getAccountManagerByRFQid,
+    getPlantHeadByengineer,
+    getCommercialManager
 };

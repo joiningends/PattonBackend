@@ -25,6 +25,10 @@ export const EmailTemplate = sequelize.define("EmailTemplate", {
         type: DataTypes.TEXT,
         allowNull: false
     },
+    tags: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    },
     status: {
         type: DataTypes.BOOLEAN,
         defaultValue: true

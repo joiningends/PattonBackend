@@ -64,6 +64,8 @@ const LoginUser = catchAsyncError(async (req, res, next) => {
         token,
         user: {
             id: userDetails.id,
+            first_name: userDetails.first_name,
+            last_name: userDetails.last_name,
             email: userDetails.email,
             roleid,
             role_name

@@ -1,5 +1,5 @@
 import express from "express";
-import { saveUserdata, getUserData, editUserData, enableDisableUser, deleteUser, mapUserWithRole, verifyEmail, sendEmailVerificationMail, getUserRoleDataByUserId, getNpdEngineer, getVendorEngineer, getProcessEngineer, getAllengineerByplantHeadId, getCommercialTeam } from "../controller/userController.js";
+import { saveUserdata, getUserData, editUserData, enableDisableUser, deleteUser, mapUserWithRole, verifyEmail, sendEmailVerificationMail, getUserRoleDataByUserId, getNpdEngineer, getVendorEngineer, getProcessEngineer, getAllengineerByplantHeadId, getCommercialTeam, getAccountManagerByRFQid, getPlantHeadByengineer, getCommercialManager } from "../controller/userController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -19,6 +19,9 @@ router.get("/get-vendoreng/:p_user_id", getVendorEngineer);
 router.get("/get-processeng/:p_user_id", getProcessEngineer);
 router.get("/get-commercial-team", getCommercialTeam);
 router.get("/get-allengineers/:p_user_id", getAllengineerByplantHeadId);
-router.get("/:id", getUserData);                                            // fecth user by Id
+router.get("/:id", getUserData);                
+router.get("/get-account-manager/:rfq_id", authenticateUser, getAccountManagerByRFQid);   
+router.get("/get-plant-head/:engId", authenticateUser, getPlantHeadByengineer);        
+router.get("/get-commercial-manager/:roleId", authenticateUser, getCommercialManager);           
 
 export default router; 
