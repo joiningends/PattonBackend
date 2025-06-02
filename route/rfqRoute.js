@@ -1,5 +1,5 @@
 import express from "express";
-import { approveOrRejectRFQ, assignRFQtoUser, autoCalculateCostsByRfqId, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDetailByUserRole, getRFQDocuments, getRFQforPlantHead, getStatesOfRFQ, insertCommentsForRFQ, insertFactoryOverheadCost, insertTotalFactoryCost, rejectRFQwithState, saveRFQandSKUdata, updateRfqState, updateRFQStatus, uploadRFQDocuments } from "../controller/rfqController.js";
+import { approveOrRejectRFQ, assignRFQtoUser, autoCalculateCostsByRfqId, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDetailByUserRole, getRFQDocuments, getRFQforPlantHead, getStatesOfRFQ, insertCommentsForRFQ, insertFactoryOverheadCost, insertRFQVersions, insertTotalFactoryCost, rejectRFQwithState, saveRFQandSKUdata, updateRfqState, updateRFQStatus, uploadRFQDocuments } from "../controller/rfqController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -36,6 +36,9 @@ router.post("/save-factory-overhead/", authenticateUser, insertFactoryOverheadCo
 router.get("/calculate/total-factory-cost/:rfqid", authenticateUser, insertTotalFactoryCost);
 
 //Insert comments
-router.post("/save-comments/", authenticateUser, insertCommentsForRFQ);  
+router.post("/save-comments/", authenticateUser, insertCommentsForRFQ); 
+
+// Versions
+router.post("/save-rfq-version/", authenticateUser, insertRFQVersions);
 
 export default router;

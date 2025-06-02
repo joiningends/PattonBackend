@@ -47,6 +47,21 @@ const getSKUbyRFQid = catchAsyncError(async (req, res, next) => {
     }
 });
 
+const getAllSKU = catchAsyncError(async (req, res, next) => {
+
+    const query = `SELECT * FROM sku_table WHERE status = true`;
+
+    const skuData = await sequelize.query(query);
+
+    if(!skuData) return next(new ErrorHandler("SKU data not found", 404));
+
+    res.status(200).json({
+        success: true,
+        message: "All sku data fetched successfully",
+        data: skuData
+    });
+});
+
 
 const getProductsBySKUId = catchAsyncError(async (req, res, next) => {
     const { p_sku_id } = req.params;
@@ -442,63 +457,6 @@ const saveOrUpdateJobCost = catchAsyncError(async (req, res, next) => {
     }
 });
 
-
-// const saveOrUpdateJobCost = catchAsyncError(async (req, res, next) => {
-//     const { job_id, isskulevel, sku_id, rfq_id, job_costs, status, isEdit = false } = req.body;
-
-//     // Validate required fields
-//     if (!job_id || isskulevel === undefined || !rfq_id || !job_costs || status === undefined) {
-//         return next(new ErrorHandler("Please provide all required fields: job_id, isskulevel, rfq_id, job_costs, status", 400));
-//     }
-
-//     try {
-//         // Format job_costs correctly based on level
-//         let formattedJobCosts;
-//         if (isskulevel) {
-//             // For SKU level, we expect a single cost object
-//             formattedJobCosts = Array.isArray(job_costs) ? job_costs : [job_costs];
-//         } else {
-//             // For product level, we expect an array of costs
-//             formattedJobCosts = Array.isArray(job_costs) ? job_costs : [];
-//         }
-
-//         const response = await sequelize.query(
-//             `SELECT * FROM ${isEdit ? 'update_job_cost_sku_or_product' : 'insert_job_cost'}(
-//                 :job_id, 
-//                 :isskulevel, 
-//                 :sku_id, 
-//                 :rfq_id, 
-//                 :job_costs, 
-//                 :status
-//             )`,
-//             {
-//                 replacements: {
-//                     job_id,
-//                     isskulevel,
-//                     sku_id,
-//                     rfq_id,
-//                     job_costs: JSON.stringify(formattedJobCosts),
-//                     status
-//                 },
-//                 type: sequelize.QueryTypes.SELECT
-//             }
-//         );
-
-//         if (!response[0]?.success) {
-//             return next(new ErrorHandler(response[0]?.message ||
-//                 `Failed to ${isEdit ? 'update' : 'save'} job costs`, 400));
-//         }
-
-//         res.status(200).json({
-//             success: true,
-//             message: response[0].message ||
-//                 `Job costs ${isEdit ? 'updated' : 'saved'} successfully`
-//         });
-
-//     } catch (error) {
-//         return next(new ErrorHandler(error.message, 500));
-//     }
-// });
 
 const getJobCostsByRfqAndSku = catchAsyncError(async (req, res, next) => {
     const { rfqId, skuId } = req.params;
@@ -926,6 +884,7 @@ const calculateFactoryOverheadCost = catchAsyncError(async (req, res, next) => {
 
 export {
     getSKUbyRFQid,
+    getAllSKU,
     saveProductswithSKUdetails,
     getProductsBySKUId,
     deleteProductById,

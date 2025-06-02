@@ -100,9 +100,9 @@ const getRFQDetail = catchAsyncError(async (req, res, next) => {
 
 
 const getRFQforPlantHead = catchAsyncError(async (req, res, next) => {
-    const {p_user_id, p_rfq_id, p_client_id} = req.body;
+    const { p_user_id, p_rfq_id, p_client_id } = req.body;
 
-    if(!p_user_id) return next(new ErrorHandler("User id is required", 400));
+    if (!p_user_id) return next(new ErrorHandler("User id is required", 400));
 
     const rfqData = await sequelize.query(`SELECT * FROM get_rfq_for_planthead(:p_user_id, :p_rfq_id, :p_client_id);`, {
         replacements: {
@@ -238,11 +238,11 @@ const processRFQResults = (results) => {
 
 
 const updateRFQStatus = catchAsyncError(async (req, res, next) => {
-    const {rfqid, status} = req.params;
+    const { rfqid, status } = req.params;
 
-    if(!rfqid) return next(new ErrorHandler("RFQ id is required.", 400));
+    if (!rfqid) return next(new ErrorHandler("RFQ id is required.", 400));
 
-    if(!status) return next(new ErrorHandler("RFQ status is required.", 400));
+    if (!status) return next(new ErrorHandler("RFQ status is required.", 400));
 
     const result = await sequelize.query(
         `UPDATE rfq_table SET status=${status} WHERE id=${rfqid}`
@@ -983,6 +983,37 @@ const insertCommentsForRFQ = catchAsyncError(async (req, res, next) => {
 });
 
 
+const insertRFQVersions = catchAsyncError(async (req, res, next) => {
+
+    const { p_rfq_id } = req.body;
+
+    console.log("RFQ ID ------: ", p_rfq_id);
+
+    if (!p_rfq_id) return next(new ErrorHandler("RFQ id is required", 400));
+
+    const [response] = await sequelize.query(`CALL insert_rfq_versions(:p_rfq_id, null, null)`,
+        {
+            replacements: {
+                p_rfq_id: p_rfq_id,
+            },
+            type: sequelize.QueryTypes.RAW
+        }
+    );
+
+    const { success, message } = response[0];
+    console.log("response -----", response);
+
+    if (!success) {
+        return next(new ErrorHandler(message || "Failed to insert RFQ versions", 400));
+    }
+
+    res.status(200).json({
+        success: true,
+        message: message || "RFQ version inserted successfully",
+    });
+})
+
+
 export {
     saveRFQandSKUdata,
     getRFQDetail,
@@ -1000,7 +1031,8 @@ export {
     autoCalculateCostsByRfqId,
     updateRfqState,
     insertFactoryOverheadCost,
-    insertTotalFactoryCost,  
+    insertTotalFactoryCost,
     insertCommentsForRFQ,
-    updateRFQStatus
+    updateRFQStatus,
+    insertRFQVersions
 };

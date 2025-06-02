@@ -1,5 +1,5 @@
 import express from "express";
-import { saveUserdata, getUserData, editUserData, enableDisableUser, deleteUser, mapUserWithRole, verifyEmail, sendEmailVerificationMail, getUserRoleDataByUserId, getNpdEngineer, getVendorEngineer, getProcessEngineer, getAllengineerByplantHeadId, getCommercialTeam, getAccountManagerByRFQid, getPlantHeadByengineer, getCommercialManager } from "../controller/userController.js";
+import { saveUserdata, getUserData, editUserData, enableDisableUser, deleteUser, mapUserWithRole, verifyEmail, sendEmailVerificationMail, getUserRoleDataByUserId, getNpdEngineer, getVendorEngineer, getProcessEngineer, getAllengineerByplantHeadId, getCommercialTeam, getAccountManagerByRFQid, getPlantHeadByengineer, getUserInfo, getEngineersByAssignment, getEngineersByAssignEngineers } from "../controller/userController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -22,6 +22,8 @@ router.get("/get-allengineers/:p_user_id", getAllengineerByplantHeadId);
 router.get("/:id", getUserData);                
 router.get("/get-account-manager/:rfq_id", authenticateUser, getAccountManagerByRFQid);   
 router.get("/get-plant-head/:engId", authenticateUser, getPlantHeadByengineer);        
-router.get("/get-commercial-manager/:roleId", authenticateUser, getCommercialManager);           
+router.get("/get-user-info/:roleId", authenticateUser, getUserInfo);
+router.post("/get-engineers-review", authenticateUser, getEngineersByAssignment);  
+router.post("/get-engineers-assign", authenticateUser, getEngineersByAssignEngineers);         
 
 export default router; 

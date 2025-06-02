@@ -8,6 +8,7 @@ import crypto from "crypto";
 import { Verification } from "../model/emailVerificationModel.js";
 import nodemailer from "nodemailer";
 import { sendEmail } from "./emailController.js";
+import { AsyncLocalStorage } from "async_hooks";
 
 
 // Generate random numbers
@@ -531,7 +532,7 @@ const getPlantHeadByengineer = catchAsyncError(async (req, res, next) => {
     });
 });
 
-const getCommercialManager = catchAsyncError(async(req, res, next) => {
+const getUserInfo = catchAsyncError(async(req, res, next) => {
     const {roleId} = req.params;    // commercial manager roleId
 
     if(!roleId) return next(new ErrorHandler("Commercial manager roleId is required.", 400));
@@ -547,6 +548,52 @@ const getCommercialManager = catchAsyncError(async(req, res, next) => {
     res.status(200).json({
         success: true,
         message: "Commercial manager fetched successfully",
+        data: response[0]
+    })
+});
+
+const getEngineersByAssignment = catchAsyncError(async(req, res, next) => {
+    const {rfq_id, assigned_by_id, assigned_by_roleid} = req.body;
+
+    if(!rfq_id) return next(new ErrorHandler("RFQ id is required.", 400));
+    if(!assigned_by_id || !assigned_by_roleid) return next(new ErrorHandler("Assigned by information required Id and roleId", 400));
+
+    const query = `SELECT ut.first_name, ut.last_name, ut.email, ut.id, ra.assigned_to_roleid FROM rfq_assignment ra
+                JOIN user_table ut ON ra.assigned_to_id = ut.id
+                WHERE rfq_id = ${rfq_id} AND
+                assigned_by_id = ${assigned_by_id} AND 
+                assigned_by_roleid = ${assigned_by_roleid} AND 
+                ra.status = true AND
+                ut.status = true`;
+
+    const response = await sequelize.query(query);
+
+    if(!response) return next(new ErrorHandler("Engineers not found", 404));
+
+    res.status(200).json({
+        success: true,
+        message: "Engineer fetched successfully",
+        data: response
+    })
+});
+
+
+// SELECT * FROM get_engineers_by_assignment(14, 65, 19);
+const getEngineersByAssignEngineers = catchAsyncError(async(req, res, next) => {
+    const {p_engineer_id, p_rfq_id, p_engineer_roleid} = req.body;
+
+    if(!p_engineer_id || !p_engineer_roleid) return next(new ErrorHandler("Engineer id and role id is required.", 400));
+    if(!p_rfq_id) return next(new ErrorHandler("RFQ id is required", 400));
+
+    const query = `SELECT * FROM get_engineers_by_assignment(${p_engineer_id}, ${p_rfq_id}, ${p_engineer_roleid});`;
+
+    const response = await sequelize.query(query);
+
+    if(!response) return next(new ErrorHandler("Engineers not found", 404));
+
+    res.status(200).json({
+        success: true,
+        message: "Engineer fetched successfully",
         data: response
     })
 });
@@ -569,5 +616,7 @@ export {
     getCommercialTeam,
     getAccountManagerByRFQid,
     getPlantHeadByengineer,
-    getCommercialManager
+    getUserInfo,
+    getEngineersByAssignment,
+    getEngineersByAssignEngineers
 };
