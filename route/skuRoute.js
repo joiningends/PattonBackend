@@ -1,5 +1,5 @@
 import express from "express";
-import { calculateSubTotalCost, deleteJobCostBySkuJobId, deleteProductById, editBomCostPerKgbyProductId, editBomCostPerkgByProductId, editNetWeightOfProductByProductId, editProductNetWeightProductId, editYieldPercbyProductId, editYieldPercentageByProductId, getAllSKU, getJobCostsByRfqAndSku, getProductsBySKUId, getSKUbyRFQid, reCalculateCifValue, saveAllCostsAndCalculateCIF, saveBOMProductswithSKUdetails, saveCalculateOverheadPercentage, saveMarginAndCalculateTotalCost, saveOrUpdateJobCost, saveProductswithSKUdetails, setClientCurrencyCost, updateAssemblyWeightBySkuid } from "../controller/skuController.js";
+import { calculateSubTotalCost, deleteJobCostBySkuJobId, deleteProductById, editBomCostPerKgbyProductId, editBomCostPerkgByProductId, editNetWeightOfProductByProductId, editProductNetWeightProductId, editYieldPercbyProductId, editYieldPercentageByProductId, getAllSKU, getJobCostsByRfqAndSku, getlatestSKUbyRFQid, getProductsBySKUId, getSKUbyRFQid, reCalculateCifValue, saveAllCostsAndCalculateCIF, saveBOMProductswithSKUdetails, saveCalculateOverheadPercentage, saveMarginAndCalculateTotalCost, saveOrUpdateJobCost, saveProductswithSKUdetails, setClientCurrencyCost, updateAssemblyWeightBySkuid } from "../controller/skuController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 
@@ -7,6 +7,7 @@ const router = express.Router();
 
 
 router.get("/getsku/:rfqId", authenticateUser, getSKUbyRFQid);
+router.get("/getlatestsku/:rfqId", authenticateUser, getlatestSKUbyRFQid);
 router.post("/saveproducts", authenticateUser, saveProductswithSKUdetails);
 router.post("/save-bomproducts", authenticateUser, saveBOMProductswithSKUdetails);
 router.get("/getproducts/:p_sku_id", authenticateUser, getProductsBySKUId);

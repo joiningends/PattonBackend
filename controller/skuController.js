@@ -47,6 +47,51 @@ const getSKUbyRFQid = catchAsyncError(async (req, res, next) => {
     }
 });
 
+const getlatestSKUbyRFQid = catchAsyncError(async (req, res, next) => {
+    try {
+        const { rfqId } = req.params;
+        const { skuId } = req.query; // Get skuId from query params if provided
+
+        if (!rfqId) return next(new ErrorHandler("RFQ id is required.", 400));
+
+        // Query the function using raw SQL
+        const query = skuId
+            ? `SELECT * FROM get_latest_version_sku_by_rfqid(:rfqId, :skuId);`
+            : `SELECT * FROM get_latest_version_sku_by_rfqid(:rfqId, NULL);`;
+
+        const skuData = await sequelize.query(query, {
+            replacements: { rfqId, skuId },
+            type: sequelize.QueryTypes.SELECT,
+        });
+
+        if (!skuData || skuData.length === 0) {
+            return next(new ErrorHandler("No SKU found for the given RFQ ID", 404));
+        }
+
+        // Process the products JSON data
+        const processedData = skuData.map(sku => {
+            // Parse products if they're returned as a string
+            if (sku.products && typeof sku.products === 'string') {
+                try {
+                    sku.products = JSON.parse(sku.products);
+                } catch (e) {
+                    console.warn("Failed to parse products JSON", e);
+                    // Keep the original format if parsing fails
+                }
+            }
+            return sku;
+        });
+
+        res.status(200).json({
+            success: true,
+            data: processedData, // Send processed array of SKUs with products
+        });
+    } catch (error) {
+        console.error("Error details: ", error);
+        next(new ErrorHandler("Internal server error", 500));
+    }
+});
+
 const getAllSKU = catchAsyncError(async (req, res, next) => {
 
     const query = `SELECT * FROM sku_table WHERE status = true`;
@@ -884,6 +929,7 @@ const calculateFactoryOverheadCost = catchAsyncError(async (req, res, next) => {
 
 export {
     getSKUbyRFQid,
+    getlatestSKUbyRFQid,
     getAllSKU,
     saveProductswithSKUdetails,
     getProductsBySKUId,

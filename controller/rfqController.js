@@ -9,6 +9,7 @@ import { fileURLToPath } from "url";
 import { promisify } from 'util';
 import { State } from "../model/stateModel.js";
 import { Sequelize } from "sequelize";
+import { version } from "os";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -68,7 +69,9 @@ const getRFQDetail = catchAsyncError(async (req, res, next) => {
         // if(!p_user_id) return next(new ErrorHandler("User id is required.", 400));
 
         // Query the function using raw SQL
-        const query = `SELECT * FROM get_rfq(:p_user_id, :p_rfq_id, :p_client_id);`;
+        // const query = `SELECT * FROM get_rfq(:p_user_id, :p_rfq_id, :p_client_id);`;
+        
+        const query = `SELECT * FROM get_rfq_latest(:p_user_id, :p_rfq_id, :p_client_id);`;
 
         console.log("RFQ_ID: ", p_rfq_id);
 
@@ -211,6 +214,8 @@ const processRFQResults = (results) => {
                 cif_cost: row.cif_cost,
                 fob_cost: row.fob_cost,
                 total_cost_to_customer: row.total_cost_to_customer,
+                version_no: row.version_no,
+                is_latest_version: row.is_latest_version,
                 skus: []
             });
         }
