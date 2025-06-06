@@ -266,6 +266,23 @@ const editYieldPercentageByProductId = catchAsyncError(async (req, res, next) =>
 })
 
 
+const editLatestYieldPercentageByProductId = catchAsyncError(async (req, res, next) => {
+    const { product_id, yield_percentage } = req.body;
+
+
+    if (!product_id) return next(new ErrorHandler("Product id is required.", 400));
+
+    const result = await sequelize.query(
+        `SELECT * FROM update_product_yield_percentage_latest(${product_id}, ${yield_percentage})`
+    );
+
+    res.status(200).json({
+        success: true,
+        message: "Yield percentage changed successfully."
+    });
+})
+
+
 const editBomCostPerkgByProductId = catchAsyncError(async (req, res, next) => {
     const { product_id, bom_cost_per_kg } = req.body;
 
@@ -541,6 +558,47 @@ const getJobCostsByRfqAndSku = catchAsyncError(async (req, res, next) => {
         return next(new ErrorHandler(error.message, 500));
     }
 });
+
+
+const getLatestJobCostsByRfqAndSku = catchAsyncError(async (req, res, next) => {
+    const { rfqId, skuId } = req.params;
+
+    if (!rfqId || !skuId) {
+        return next(new ErrorHandler("RFQ ID and SKU ID are required", 400));
+    }
+
+    try {
+        const jobCosts = await sequelize.query(
+            `SELECT * FROM get_job_costs_by_rfq_and_sku_latest(:rfqId, :skuId)`,
+            {
+                replacements: { rfqId, skuId },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        // Organize by job type if needed
+        const organizedData = {};
+        jobCosts.forEach(cost => {
+            if (!organizedData[cost.job_id]) {
+                organizedData[cost.job_id] = {
+                    job_id: cost.job_id,
+                    job_name: cost.job_name,
+                    costs: []
+                };
+            }
+            organizedData[cost.job_id].costs.push(cost);
+        });
+
+        res.status(200).json({
+            success: true,
+            data: Object.values(organizedData)
+        });
+
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
 
 
 const deleteJobCostBySkuJobId = catchAsyncError(async (req, res, next) => {
@@ -936,6 +994,7 @@ export {
     deleteProductById,
     saveBOMProductswithSKUdetails,
     editYieldPercentageByProductId,
+    editLatestYieldPercentageByProductId,
     editBomCostPerkgByProductId,
     editNetWeightOfProductByProductId,
     updateAssemblyWeightBySkuid,
@@ -944,6 +1003,7 @@ export {
     editProductNetWeightProductId,
     saveOrUpdateJobCost,
     getJobCostsByRfqAndSku,
+    getLatestJobCostsByRfqAndSku,
     calculateSubTotalCost,
     deleteJobCostBySkuJobId,
     saveCalculateOverheadPercentage,

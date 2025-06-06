@@ -1,5 +1,5 @@
 import express from "express";
-import { approveOrRejectRFQ, assignRFQtoUser, autoCalculateCostsByRfqId, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDetailByUserRole, getRFQDocuments, getRFQforPlantHead, getStatesOfRFQ, insertCommentsForRFQ, insertFactoryOverheadCost, insertRFQVersions, insertTotalFactoryCost, rejectRFQwithState, saveRFQandSKUdata, updateRfqState, updateRFQStatus, uploadRFQDocuments } from "../controller/rfqController.js";
+import { approveOrRejectRFQ, assignRFQtoUser, autoCalculateCostsByRfqId, autoLatestCalculateCostsByRfqId, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDetailByUserRole, getRFQDocuments, getRFQforPlantHead, getStatesOfRFQ, insertCommentsForRFQ, insertFactoryOverheadCost, insertRFQVersions, insertTotalFactoryCost, rejectRFQwithState, saveRFQandSKUdata, updateRfqState, updateRFQStatus, uploadRFQDocuments } from "../controller/rfqController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -29,6 +29,8 @@ router.post("/assign/", authenticateUser, assignRFQtoUser);                     
 router.post("/reject/", authenticateUser, rejectRFQwithState);    // Reject rfq by plant head
 
 router.post("/auto-calculate/", authenticateUser, autoCalculateCostsByRfqId);
+router.post("/auto-latest-calculate/", authenticateUser, autoLatestCalculateCostsByRfqId);
+
 router.post("/update/rfq-state/", authenticateUser, updateRfqState);
 
 // Factory overhead 

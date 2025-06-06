@@ -175,6 +175,34 @@ const getOtherCostBySkuAndRfqid = catchAsyncError(async(req, res, next) => {
 });
 
 
+const getLatestOtherCostBySkuAndRfqid = catchAsyncError(async(req, res, next) => {
+    const {rfq_id, sku_id} = req.params;
+
+    if(!rfq_id || !sku_id) return next(new ErrorHandler("Please provide all the required fileds", 400));
+
+    try{
+        const otherCostData = await sequelize.query(
+            `SELECT * FROM get_other_cost_by_skuid_latest(:p_rfq_id, :p_sku_id);`,
+            {
+                replacements: {
+                    p_rfq_id: rfq_id,
+                    p_sku_id: sku_id
+                },
+                type: sequelize.QueryTypes.SELECT   
+            }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "Other cost data by sku and rfq id fetched successfully",
+            data: otherCostData
+        });
+    }catch(error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+
 const deleteOtherCostBySkuAndRfqidOtherCostId = catchAsyncError(async(req, res, next) => {
     const {id} = req.params;
 
@@ -226,4 +254,14 @@ const editOtherCostById = catchAsyncError(async (req, res, next) => {
 
 
 
-export { saveOtherCost, getOtherCost, editOtherCost, deleteOtherCost, saveOtherCostWithSkuId, getOtherCostBySkuAndRfqid, deleteOtherCostBySkuAndRfqidOtherCostId, editOtherCostById };
+export { 
+    saveOtherCost, 
+    getOtherCost, 
+    editOtherCost, 
+    deleteOtherCost, 
+    saveOtherCostWithSkuId, 
+    getOtherCostBySkuAndRfqid,
+    getLatestOtherCostBySkuAndRfqid, 
+    deleteOtherCostBySkuAndRfqidOtherCostId, 
+    editOtherCostById 
+};

@@ -867,6 +867,28 @@ const autoCalculateCostsByRfqId = catchAsyncError(async (req, res, next) => {
 });
 
 
+const autoLatestCalculateCostsByRfqId = catchAsyncError(async (req, res, next) => {
+    const { p_rfq_id } = req.body;
+
+    if (!p_rfq_id) return next(new ErrorHandler("RFQ id is required.", 400));
+
+    const response = await sequelize.query(
+        'SELECT * FROM calculate_all_product_costs_for_rfq_latest(:p_rfq_id);',
+        {
+            replacements: {
+                p_rfq_id: p_rfq_id
+            },
+            type: sequelize.QueryTypes.RAW
+        }
+    );
+
+    res.status(200).json({
+        success: true,
+        message: "Auto calculation for revised RFQ executed successfully."
+    })
+});
+
+
 const updateRfqState = catchAsyncError(async (req, res, next) => {
     const { rfq_id, rfq_state } = req.body;
     if (!rfq_id) return next(new ErrorHandler("Please provide RFQ id", 400));
@@ -992,7 +1014,7 @@ const insertRFQVersions = catchAsyncError(async (req, res, next) => {
 
     const { p_rfq_id } = req.body;
 
-    console.log("RFQ ID ------: ", p_rfq_id);
+    // console.log("RFQ ID ------: ", p_rfq_id);
 
     if (!p_rfq_id) return next(new ErrorHandler("RFQ id is required", 400));
 
@@ -1006,7 +1028,7 @@ const insertRFQVersions = catchAsyncError(async (req, res, next) => {
     );
 
     const { success, message } = response[0];
-    console.log("response -----", response);
+    // console.log("response -----", response);
 
     if (!success) {
         return next(new ErrorHandler(message || "Failed to insert RFQ versions", 400));
@@ -1034,6 +1056,7 @@ export {
     rejectRFQwithState,
     getRFQDetailByUserRole,
     autoCalculateCostsByRfqId,
+    autoLatestCalculateCostsByRfqId,
     updateRfqState,
     insertFactoryOverheadCost,
     insertTotalFactoryCost,
