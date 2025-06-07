@@ -1,5 +1,5 @@
 import express from "express";
-import { calculateSubTotalCost, deleteJobCostBySkuJobId, deleteProductById, editBomCostPerKgbyProductId, editBomCostPerkgByProductId, editLatestYieldPercentageByProductId, editNetWeightOfProductByProductId, editProductNetWeightProductId, editYieldPercbyProductId, editYieldPercentageByProductId, getAllSKU, getJobCostsByRfqAndSku, getLatestJobCostsByRfqAndSku, getlatestSKUbyRFQid, getProductsBySKUId, getSKUbyRFQid, reCalculateCifValue, saveAllCostsAndCalculateCIF, saveBOMProductswithSKUdetails, saveCalculateOverheadPercentage, saveMarginAndCalculateTotalCost, saveOrUpdateJobCost, saveProductswithSKUdetails, setClientCurrencyCost, updateAssemblyWeightBySkuid } from "../controller/skuController.js";
+import { calculateSubTotalCost, deleteJobCostBySkuJobId, deleteProductById, editBomCostPerKgbyProductId, editBomCostPerkgByProductId, editLatestBomCostPerKgbyProductId, editLatestProductNetWeightProductId, editLatestYieldPercentageByProductId, editNetWeightOfProductByProductId, editProductNetWeightProductId, editYieldPercbyProductId, editYieldPercentageByProductId, getAllSKU, getJobCostsByRfqAndSku, getLatestJobCostsByRfqAndSku, getlatestSKUbyRFQid, getProductsBySKUId, getSKUbyRFQid, reCalculateCifValue, saveAllCostsAndCalculateCIF, saveBOMProductswithSKUdetails, saveCalculateOverheadPercentage, saveMarginAndCalculateTotalCost, saveOrUpdateJobCost, saveProductswithSKUdetails, setClientCurrencyCost, updateAssemblyWeightBySkuid } from "../controller/skuController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 
@@ -19,7 +19,9 @@ router.get("/calculate-assembly/:sku_id", authenticateUser, updateAssemblyWeight
 router.post("/edit-yield", authenticateUser, editYieldPercbyProductId);
 router.post("/edit-latest-yield", authenticateUser, editLatestYieldPercentageByProductId);
 router.post("/edit-bom-cost", authenticateUser, editBomCostPerKgbyProductId);
+router.post("/edit-latest-bom-cost", authenticateUser, editLatestBomCostPerKgbyProductId);
 router.post("/edit-net-weight", authenticateUser, editProductNetWeightProductId);
+router.post("/edit-latest-net-weight", authenticateUser, editLatestProductNetWeightProductId);
 router.post("/job-cost", authenticateUser, saveOrUpdateJobCost);
 router.get("/fetch/job-cost/:rfqId/:skuId", authenticateUser, getJobCostsByRfqAndSku);
 router.get("/fetch/job-cost-latest/:rfqId/:skuId", authenticateUser, getLatestJobCostsByRfqAndSku);

@@ -412,6 +412,41 @@ const editBomCostPerKgbyProductId = catchAsyncError(async (req, res, next) => {
 
 
 
+const editLatestBomCostPerKgbyProductId = catchAsyncError(async (req, res, next) => {
+    const { product_id, bom_cost_per_kg } = req.body;
+
+    if (!product_id) next(new ErrorHandler("Product id is required.", 400));
+    if (!bom_cost_per_kg) next(new ErrorHandler("Bom cost per kg is required.", 400));
+
+    const [result] = await sequelize.query(
+        `SELECT * FROM update_product_bom_cost_per_kg_latest(:p_product_id, :p_bom_cost_per_kg);`,
+        {
+            replacements: {
+                p_product_id: product_id,
+                p_bom_cost_per_kg: bom_cost_per_kg
+            },
+            type: sequelize.QueryTypes.SELECT
+        }
+    );
+
+    console.log(result);
+
+    if (!result) {
+        return next(new ErrorHandler("No response from database operation", 500));
+    }
+
+    if (!result.success) {
+        return next(new ErrorHandler(result.message, 400));
+    }
+
+    res.status(200).json({
+        success: true,
+        message: result.message,
+    });
+})
+
+
+
 
 const editProductNetWeightProductId = catchAsyncError(async (req, res, next) => {
     const { product_id, net_weight_of_product } = req.body;
@@ -421,6 +456,41 @@ const editProductNetWeightProductId = catchAsyncError(async (req, res, next) => 
 
     const [result] = await sequelize.query(
         `SELECT * FROM update_product_net_weight(:p_product_id, :p_net_weight_of_product);`,
+        {
+            replacements: {
+                p_product_id: product_id,
+                p_net_weight_of_product: net_weight_of_product
+            },
+            type: sequelize.QueryTypes.SELECT
+        }
+    );
+
+    console.log(result);
+
+    if (!result) {
+        return next(new ErrorHandler("No response from database operation", 500));
+    }
+
+    if (!result.success) {
+        return next(new ErrorHandler(result.message, 400));
+    }
+
+    res.status(200).json({
+        success: true,
+        message: result.message,
+    });
+});
+
+
+
+const editLatestProductNetWeightProductId = catchAsyncError(async (req, res, next) => {
+    const { product_id, net_weight_of_product } = req.body;
+
+    if (!product_id) next(new ErrorHandler("Product id is required.", 400));
+    if (!net_weight_of_product) next(new ErrorHandler("net weight of product is required.", 400));
+
+    const [result] = await sequelize.query(
+        `SELECT * FROM update_product_net_weight_latest(:p_product_id, :p_net_weight_of_product);`,
         {
             replacements: {
                 p_product_id: product_id,
@@ -1000,7 +1070,9 @@ export {
     updateAssemblyWeightBySkuid,
     editYieldPercbyProductId,
     editBomCostPerKgbyProductId,
+    editLatestBomCostPerKgbyProductId,
     editProductNetWeightProductId,
+    editLatestProductNetWeightProductId,
     saveOrUpdateJobCost,
     getJobCostsByRfqAndSku,
     getLatestJobCostsByRfqAndSku,
