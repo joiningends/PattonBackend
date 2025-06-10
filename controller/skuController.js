@@ -590,6 +590,80 @@ const saveOrUpdateJobCost = catchAsyncError(async (req, res, next) => {
 });
 
 
+
+const saveOrUpdateLatestJobCost = catchAsyncError(async (req, res, next) => {
+    const { job_id, isskulevel, sku_id, rfq_id, job_costs, status, isEdit = false } = req.body;
+
+    // Validate required fields
+    if (!job_id || isskulevel === undefined || !rfq_id || !job_costs || status === undefined) {
+        return next(new ErrorHandler("Please provide all required fields: job_id, isskulevel, rfq_id, job_costs, status", 400));
+    }
+
+    // For SKU level, validate sku_id exists
+    if (isskulevel === true && !sku_id) {
+        return next(new ErrorHandler("SKU ID is required for SKU level job costs", 400));
+    }
+
+    // For product level, validate job_costs array structure
+    if (isskulevel === false) {
+        if (!Array.isArray(job_costs) || job_costs.length === 0) {
+            return next(new ErrorHandler("Job costs must be a non-empty array for product level", 400));
+        }
+
+        for (const cost of job_costs) {
+            if (!cost.product_id || cost.job_cost === undefined) {
+                return next(new ErrorHandler("Each product cost must contain product_id, job_cost", 400));
+            }
+        }
+    } else {
+        // For SKU level, ensure job_costs has at least one entry (but only first is used)
+        if (!Array.isArray(job_costs) || job_costs.length === 0) {
+            return next(new ErrorHandler("Job cost data is required for SKU level", 400));
+        }
+    }
+
+    try {
+        const functionName = isEdit ? 'update_job_cost_sku_or_product_latest' : 'insert_job_cost_latest';
+
+        const response = await sequelize.query(
+            `SELECT * FROM ${functionName}(
+                :job_id, 
+                :isskulevel, 
+                :sku_id, 
+                :rfq_id, 
+                :job_costs, 
+                :status
+            )`,
+            {
+                replacements: {
+                    job_id,
+                    isskulevel,
+                    sku_id,
+                    rfq_id,
+                    job_costs: JSON.stringify(job_costs),
+                    status
+                },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (!response[0]?.success) {
+            return next(new ErrorHandler(response[0]?.message ||
+                `Failed to ${isEdit ? 'update' : 'save'} job costs`, 400));
+        }
+
+        res.status(200).json({
+            success: true,
+            message: response[0].message ||
+                `Job costs ${isEdit ? 'updated' : 'saved'} successfully`
+        });
+
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+
 const getJobCostsByRfqAndSku = catchAsyncError(async (req, res, next) => {
     const { rfqId, skuId } = req.params;
 
@@ -725,6 +799,37 @@ const calculateSubTotalCost = catchAsyncError(async (req, res, next) => {
     });
 });
 
+
+const calculateLatestSubTotalCost = catchAsyncError(async (req, res, next) => {
+    const { sku_id, rfq_id } = req.params;
+
+    if (!sku_id) return next(new ErrorHandler("Sku id is required.", 400));
+
+    if (!rfq_id) return next(new ErrorHandler("RFQ id is required.", 400));
+
+
+    const result = await sequelize.query(
+        `SELECT calculate_subtotal_cost_by_sku_latest(:p_sku_id, :p_rfq_id) AS subtotal_cost;`,
+        {
+            replacements: {
+                p_sku_id: sku_id,
+                p_rfq_id: rfq_id
+            },
+            type: sequelize.QueryTypes.SELECT
+        }
+    );
+
+    console.log(result);
+
+    if (!result) return next(new ErrorHandler("Error calculating sub total cost.", 500));
+
+    res.status(200).json({
+        success: true,
+        message: "Sub total cost calculated successfully",
+        subtotal_cost: result[0].subtotal_cost
+    });
+});
+
 const saveCalculateOverheadPercentage = catchAsyncError(async (req, res, next) => {
     const { p_sku_id, p_over_head_perc } = req.body;
 
@@ -739,6 +844,47 @@ const saveCalculateOverheadPercentage = catchAsyncError(async (req, res, next) =
 
         const [response] = await sequelize.query(
             `CALL insert_over_head_percentage(:p_sku_id, :p_over_head_perc, null, null)`,
+            {
+                replacements: {
+                    p_sku_id: p_sku_id,
+                    p_over_head_perc: p_over_head_perc
+                },
+                type: sequelize.QueryTypes.RAW
+            }
+        );
+
+        const { success, message } = response[0];
+
+        if (!success) {
+            return next(new ErrorHandler(message || "Failed to update overhead percentage", 400));
+        }
+
+        res.status(200).json({
+            success: true,
+            message: message || "Overhead percentage and related values updated successfully",
+        });
+
+    } catch (error) {
+        return next(new ErrorHandler(error.message || "Error updating overhead percentage", 500));
+    }
+});
+
+
+
+const saveCalculateLatestOverheadPercentage = catchAsyncError(async (req, res, next) => {
+    const { p_sku_id, p_over_head_perc } = req.body;
+
+    // Validate input
+    if (!p_sku_id) return next(new ErrorHandler("Please provide SKU id.", 400));
+    if (!p_over_head_perc) return next(new ErrorHandler("Please provide overhead percentage.", 400));
+    if (isNaN(p_over_head_perc) || p_over_head_perc <= 0) {
+        return next(new ErrorHandler("Overhead percentage must be a positive number.", 400));
+    }
+
+    try {
+
+        const [response] = await sequelize.query(
+            `CALL insert_over_head_percentage_latest(:p_sku_id, :p_over_head_perc, null, null)`,
             {
                 replacements: {
                     p_sku_id: p_sku_id,
@@ -861,6 +1007,104 @@ const saveAllCostsAndCalculateCIF = catchAsyncError(async (req, res, next) => {
 });
 
 
+
+
+const saveLatestAllCostsAndCalculateCIF = catchAsyncError(async (req, res, next) => {
+    const { p_sku_id, p_freight_cost_per_kg, p_insurance_cost_per_kg } = req.body;
+
+    // Validate input
+    if (!p_sku_id) return next(new ErrorHandler("Please provide SKU id.", 400));
+    if (!p_freight_cost_per_kg && !p_insurance_cost_per_kg) {
+        return next(new ErrorHandler("Please provide at least one cost value (freight or insurance).", 400));
+    }
+
+    const transaction = await sequelize.transaction();
+    try {
+        const results = {};
+
+        // Call freight cost procedure if provided
+        if (p_freight_cost_per_kg) {
+            if (isNaN(p_freight_cost_per_kg) || p_freight_cost_per_kg <= 0) {
+                await transaction.rollback();
+                return next(new ErrorHandler("Freight cost per kg must be a positive number.", 400));
+            }
+
+            const [freightResponse] = await sequelize.query(
+                `CALL insert_freight_cost_latest(:p_sku_id, :p_freight_cost_per_kg, null, null)`,
+                {
+                    replacements: { p_sku_id, p_freight_cost_per_kg },
+                    type: sequelize.QueryTypes.RAW,
+                    transaction
+                }
+            );
+            const { success: freightSuccess, message: freightMessage } = freightResponse[0];
+            results.freight = { success: freightSuccess, message: freightMessage };
+
+            if (!freightSuccess) {
+                await transaction.rollback();
+                return next(new ErrorHandler(freightMessage || "Failed to update freight cost", 400));
+            }
+        }
+
+        // Call insurance cost procedure if provided
+        if (p_insurance_cost_per_kg) {
+            if (isNaN(p_insurance_cost_per_kg) || p_insurance_cost_per_kg <= 0) {
+                await transaction.rollback();
+                return next(new ErrorHandler("Insurance cost per kg must be a positive number.", 400));
+            }
+
+            const [insuranceResponse] = await sequelize.query(
+                `CALL insert_insurance_cost_latest(:p_sku_id, :p_insurance_cost_per_kg, null, null)`,
+                {
+                    replacements: { p_sku_id, p_insurance_cost_per_kg },
+                    type: sequelize.QueryTypes.RAW,
+                    transaction
+                }
+            );
+
+            const { success: insuranceSuccess, message: insuranceMessage } = insuranceResponse[0];
+            results.insurance = { success: insuranceSuccess, message: insuranceMessage };
+
+            if (!insuranceSuccess) {
+                await transaction.rollback();
+                return next(new ErrorHandler(insuranceMessage || "Failed to update insurance cost", 400));
+            }
+        }
+
+        // Always call CIF calculation after updating costs
+        const [cifResponse] = await sequelize.query(
+            `CALL calculate_save_cif_value_latest(:p_sku_id, null, null)`,
+            {
+                replacements: { p_sku_id },
+                type: sequelize.QueryTypes.RAW,
+                transaction
+            }
+        );
+
+        const { success: cifSuccess, message: cifMessage } = cifResponse[0];
+        results.cif = { success: cifSuccess, message: cifMessage };
+
+        if (!cifSuccess) {
+            await transaction.rollback();
+            return next(new ErrorHandler(cifMessage || "Failed to calculate CIF value", 400));
+        }
+
+        // Commit the transaction if all operations succeeded
+        await transaction.commit();
+
+        res.status(200).json({
+            success: true,
+            message: "All operations completed successfully",
+            results
+        });
+
+    } catch (error) {
+        if (transaction) await transaction.rollback();
+        return next(new ErrorHandler(error.message || "Error in cost calculation process", 500));
+    }
+});
+
+
 const reCalculateCifValue = catchAsyncError(async (req, res, next) => {
     const { p_sku_id } = req.params;
 
@@ -870,6 +1114,45 @@ const reCalculateCifValue = catchAsyncError(async (req, res, next) => {
     try{
         const [cifResponse] = await sequelize.query(
             `CALL calculate_save_cif_value(:p_sku_id, null, null)`,
+            {
+                replacements: { p_sku_id },
+                type: sequelize.QueryTypes.RAW,
+                transaction
+            }
+        );
+
+        const { success: cifSuccess, message: cifMessage } = cifResponse[0];
+
+        if (!cifSuccess) {
+            await transaction.rollback();
+            return next(new ErrorHandler(cifMessage || "Failed to calculate CIF value", 400));
+        }
+
+        // Commit the transaction if all operations succeeded
+        await transaction.commit();
+
+        res.status(200).json({
+            success: true,
+            message: "CIF calculated successfully",
+        });
+
+    }catch(error){
+        if (transaction) await transaction.rollback();
+        return next(new ErrorHandler(error.message || "Error in cost calculation process", 500));
+    }
+});
+
+
+
+const reCalculateLatestCifValue = catchAsyncError(async (req, res, next) => {
+    const { p_sku_id } = req.params;
+
+    if (!p_sku_id) return next(new ErrorHandler("SKU id is required.", 400));
+
+    const transaction = await sequelize.transaction();
+    try{
+        const [cifResponse] = await sequelize.query(
+            `CALL calculate_save_cif_value_latest(:p_sku_id, null, null)`,
             {
                 replacements: { p_sku_id },
                 type: sequelize.QueryTypes.RAW,
@@ -973,6 +1256,81 @@ const saveMarginAndCalculateTotalCost = catchAsyncError(async (req, res, next) =
 });
 
 
+
+const saveLatestMarginAndCalculateTotalCost = catchAsyncError(async (req, res, next) => {
+    const { p_sku_id, p_pil_margin } = req.body;
+
+    // Validate input
+    if (!p_sku_id) return next(new ErrorHandler("Please provide SKU id.", 400));
+    if (!p_pil_margin) return next(new ErrorHandler("Please provide PIL margin percentage.", 400));
+    if (isNaN(p_pil_margin) || p_pil_margin <= 0) {
+        return next(new ErrorHandler("PIL margin percentage must be a positive number.", 400));
+    }
+
+    const transaction = await sequelize.transaction();
+    try {
+        // 1. First call - insert_pil_margin
+        const [marginResponse] = await sequelize.query(
+            `CALL insert_pil_margin_latest(:p_sku_id, :p_pil_margin, null, null)`,
+            {
+                replacements: {
+                    p_sku_id: p_sku_id,
+                    p_pil_margin: p_pil_margin
+                },
+                type: sequelize.QueryTypes.RAW,
+                transaction
+            }
+        );
+
+        const { success: marginSuccess, message: marginMessage } = marginResponse[0];
+
+        if (!marginSuccess) {
+            await transaction.rollback();
+            return next(new ErrorHandler(marginMessage || "Failed to update margin percentage", 400));
+        }
+
+        // 2. Second call - calculate_save_total_cost (only if first call succeeded)
+        const [totalCostResponse] = await sequelize.query(
+            `CALL calculate_save_total_cost_latest(:p_sku_id, null, null)`,
+            {
+                replacements: { p_sku_id },
+                type: sequelize.QueryTypes.RAW,
+                transaction
+            }
+        );
+
+        const { success: totalCostSuccess, message: totalCostMessage } = totalCostResponse[0];
+
+        if (!totalCostSuccess) {
+            await transaction.rollback();
+            return next(new ErrorHandler(totalCostMessage || "Failed to calculate total cost", 400));
+        }
+
+        // Commit transaction if both operations succeeded
+        await transaction.commit();
+
+        res.status(200).json({
+            success: true,
+            message: "Margin and total cost updated successfully",
+            results: {
+                margin: {
+                    success: marginSuccess,
+                    message: marginMessage
+                },
+                total_cost: {
+                    success: totalCostSuccess,
+                    message: totalCostMessage
+                }
+            }
+        });
+
+    } catch (error) {
+        if (transaction) await transaction.rollback();
+        return next(new ErrorHandler(error.message || "Error in margin and cost calculation process", 500));
+    }
+});
+
+
 const setClientCurrencyCost = catchAsyncError(async (req, res, next) => {
     const { p_sku_id, p_currency_id } = req.body;
 
@@ -988,6 +1346,51 @@ const setClientCurrencyCost = catchAsyncError(async (req, res, next) => {
     try {
         const [response] = await sequelize.query(
             `CALL insert_client_currency_cost(:p_sku_id, :p_currency_id, null, null)`,
+            {
+                replacements: {
+                    p_sku_id: parseInt(p_sku_id),
+                    p_currency_id: parseFloat(p_currency_id)
+                },
+                type: sequelize.QueryTypes.RAW
+            }
+        );
+
+        const { success, message } = response[0];
+
+        if (!success) {
+            return next(new ErrorHandler(message || "Failed to update client currency cost", 400));
+        }
+
+        res.status(200).json({
+            success: true,
+            message: message || "Client currency and cost updated successfully",
+        });
+
+    } catch (error) {
+        return next(new ErrorHandler(
+            error.message || "Error updating client currency cost",
+            error.statusCode || 500
+        ));
+    }
+});
+
+
+
+const setLatestClientCurrencyCost = catchAsyncError(async (req, res, next) => {
+    const { p_sku_id, p_currency_id } = req.body;
+
+    // Validate input
+    if (!p_sku_id) {
+        return next(new ErrorHandler("SKU ID is required", 400));
+    }
+
+    if (!p_currency_id) {
+        return next(new ErrorHandler("Currency ID is required", 400));
+    }
+
+    try {
+        const [response] = await sequelize.query(
+            `CALL insert_client_currency_cost_latest(:p_sku_id, :p_currency_id, null, null)`,
             {
                 replacements: {
                     p_sku_id: parseInt(p_sku_id),
@@ -1074,14 +1477,21 @@ export {
     editProductNetWeightProductId,
     editLatestProductNetWeightProductId,
     saveOrUpdateJobCost,
+    saveOrUpdateLatestJobCost,
     getJobCostsByRfqAndSku,
     getLatestJobCostsByRfqAndSku,
     calculateSubTotalCost,
+    calculateLatestSubTotalCost,
     deleteJobCostBySkuJobId,
     saveCalculateOverheadPercentage,
+    saveCalculateLatestOverheadPercentage,
     saveAllCostsAndCalculateCIF,
+    saveLatestAllCostsAndCalculateCIF,
     saveMarginAndCalculateTotalCost,
+    saveLatestMarginAndCalculateTotalCost,
     setClientCurrencyCost,
-    reCalculateCifValue
+    setLatestClientCurrencyCost,
+    reCalculateCifValue,
+    reCalculateLatestCifValue
     // calculateFactoryOverheadCost
 };

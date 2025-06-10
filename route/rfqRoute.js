@@ -1,5 +1,5 @@
 import express from "express";
-import { approveOrRejectRFQ, assignRFQtoUser, autoCalculateCostsByRfqId, autoLatestCalculateCostsByRfqId, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getRFQDetail, getRFQDetailByUserRole, getRFQDocuments, getRFQforPlantHead, getStatesOfRFQ, insertCommentsForRFQ, insertFactoryOverheadCost, insertRFQVersions, insertTotalFactoryCost, rejectRFQwithState, saveRFQandSKUdata, updateRfqState, updateRFQStatus, uploadRFQDocuments } from "../controller/rfqController.js";
+import { approveOrRejectRFQ, assignRFQtoUser, autoCalculateCostsByRfqId, autoLatestCalculateCostsByRfqId, deleteRFQDocument, deleteRFQDocumentPermanently, downloadRFQDocument, getParentRevisionRFQ, getRFQDetail, getRFQDetailByUserRole, getRFQDocuments, getRFQforPlantHead, getStatesOfRFQ, insertCommentsForRFQ, insertFactoryOverheadCost, insertLatestFactoryOverheadCost, insertLatestTotalFactoryCost, insertRFQVersions, insertTotalFactoryCost, rejectRFQwithState, saveRFQandSKUdata, updateRfqState, updateRFQStatus, uploadRFQDocuments } from "../controller/rfqController.js";
 import authenticateUser from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -35,12 +35,16 @@ router.post("/update/rfq-state/", authenticateUser, updateRfqState);
 
 // Factory overhead 
 router.post("/save-factory-overhead/", authenticateUser, insertFactoryOverheadCost);
+router.post("/save-factory-overhead-latest/", authenticateUser, insertLatestFactoryOverheadCost);
 router.get("/calculate/total-factory-cost/:rfqid", authenticateUser, insertTotalFactoryCost);
+router.get("/calculate/total-factory-cost-latest/:rfqid", authenticateUser, insertLatestTotalFactoryCost);
 
 //Insert comments
 router.post("/save-comments/", authenticateUser, insertCommentsForRFQ); 
 
 // Versions
 router.post("/save-rfq-version/", authenticateUser, insertRFQVersions);
+
+router.get("/get-parent-id", authenticateUser, getParentRevisionRFQ);
 
 export default router;

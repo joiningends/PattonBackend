@@ -70,7 +70,7 @@ const getRFQDetail = catchAsyncError(async (req, res, next) => {
 
         // Query the function using raw SQL
         // const query = `SELECT * FROM get_rfq(:p_user_id, :p_rfq_id, :p_client_id);`;
-        
+
         const query = `SELECT * FROM get_rfq_latest(:p_user_id, :p_rfq_id, :p_client_id);`;
 
         console.log("RFQ_ID: ", p_rfq_id);
@@ -156,7 +156,7 @@ const getRFQDetailByUserRole = catchAsyncError(async (req, res, next) => {
         console.log("role data: ", user_id, p_assigned_by_roleId, p_assigned_to_roleId);
 
         const rfqData = await sequelize.query(
-            `SELECT * FROM get_rfq_by_user_role(:p_user_id, :p_assigned_to_role, :p_assigned_by_role);`,
+            `SELECT * FROM get_rfq_by_user_role_latest(:p_user_id, :p_assigned_to_role, :p_assigned_by_role);`,
             {
                 replacements: {
                     p_user_id: user_id,
@@ -942,6 +942,35 @@ const insertFactoryOverheadCost = catchAsyncError(async (req, res, next) => {
     });
 });
 
+
+
+const insertLatestFactoryOverheadCost = catchAsyncError(async (req, res, next) => {
+    const { rfq_id, factory_overhead_perc } = req.body;
+
+    if (!rfq_id) return next(new ErrorHandler("Rfq id is required.", 400));
+
+    if (!factory_overhead_perc) return next(new ErrorHandler("Factory overhead percent is required.", 400));
+
+    const response = await sequelize.query(
+        `SELECT * FROM update_sku_factory_overhead_cost_latest(:p_rfq_id, :p_factory_overhead_perc);`,
+        {
+            replacements: {
+                p_rfq_id: rfq_id,
+                p_factory_overhead_perc: factory_overhead_perc
+            },
+            type: sequelize.QueryTypes.SELECT
+        }
+    );
+
+    if (!response[0]) return next(new ErrorHandler("No response from database operation", 500));
+    if (!response[0].success) return next(new ErrorHandler(response.message, 400));
+
+    res.status(200).json({
+        success: true,
+        message: response[0].message,
+    });
+});
+
 const insertTotalFactoryCost = catchAsyncError(async (req, res, next) => {
     const { rfqid } = req.params;
 
@@ -949,6 +978,32 @@ const insertTotalFactoryCost = catchAsyncError(async (req, res, next) => {
 
     const response = await sequelize.query(
         `SELECT * FROM calculate_total_factory_cost_by_rfqid(:p_rfq_id);`,
+        {
+            replacements: {
+                p_rfq_id: rfqid,
+            },
+            type: sequelize.QueryTypes.SELECT
+        }
+    );
+
+    if (!response[0]) return next(new ErrorHandler("No response from database operation", 500));
+    if (!response[0].success) return next(new ErrorHandler(response.message, 400));
+
+    res.status(200).json({
+        success: true,
+        message: response[0].message,
+    });
+});
+
+
+
+const insertLatestTotalFactoryCost = catchAsyncError(async (req, res, next) => {
+    const { rfqid } = req.params;
+
+    if (!rfqid) return next(new ErrorHandler("Rfq id is required.", 400));
+
+    const response = await sequelize.query(
+        `SELECT * FROM calculate_total_factory_cost_by_rfqid_latest(:p_rfq_id);`,
         {
             replacements: {
                 p_rfq_id: rfqid,
@@ -1041,6 +1096,26 @@ const insertRFQVersions = catchAsyncError(async (req, res, next) => {
 })
 
 
+const getParentRevisionRFQ = catchAsyncError(async (req, res, next) => {
+    const { p_rfq_version_id } = req.query;
+
+    if (!p_rfq_version_id) return next(new ErrorHandler("RFQ revision id is required."));
+
+    const query = `SELECT rfq_id FROM rfq_revision_table WHERE id = ${p_rfq_version_id}`;
+
+    const [response] = await sequelize.query(query);
+
+    // console.log("getParentRevisionRFQ response --------------> ", response);
+    if(!response[0].rfq_id) return next(new ErrorHandler("Failed to fetch RFQ Parent id."));
+
+    res.status(200).json({
+        success: true,
+        message: "RFQ parent id fetched successfuly",
+        data: response[0]
+    });
+});
+
+
 export {
     saveRFQandSKUdata,
     getRFQDetail,
@@ -1059,8 +1134,11 @@ export {
     autoLatestCalculateCostsByRfqId,
     updateRfqState,
     insertFactoryOverheadCost,
+    insertLatestFactoryOverheadCost,
     insertTotalFactoryCost,
+    insertLatestTotalFactoryCost,
     insertCommentsForRFQ,
     updateRFQStatus,
-    insertRFQVersions
+    insertRFQVersions,
+    getParentRevisionRFQ
 };

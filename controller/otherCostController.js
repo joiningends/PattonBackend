@@ -147,6 +147,54 @@ const saveOtherCostWithSkuId = catchAsyncError(async (req, res, next) => {
 });
 
 
+
+
+const saveLatestOtherCostWithSkuId = catchAsyncError(async (req, res, next) => {
+    const { other_cost_id, sku_id, rfq_id, other_cost, other_cost_per_kg, status } = req.body;
+
+    if (!other_cost_id || !sku_id || !rfq_id || !other_cost || !other_cost_per_kg || !status) {
+        return next(new ErrorHandler("Please provide all the required fields.", 400));
+    }
+
+    try {
+        const response = await sequelize.query(
+            `SELECT * FROM insert_sku_other_cost_latest(
+                :p_other_cost_id,
+	            :p_sku_id,
+	            :p_rfq_id,
+	            :p_other_cost_per_kg,
+	            :p_other_cost,
+	            :p_status
+            )`,
+            {
+                replacements: {
+                    p_other_cost_id: other_cost_id,
+                    p_sku_id: sku_id,
+                    p_rfq_id: rfq_id,
+	                p_other_cost_per_kg: other_cost_per_kg,
+	                p_other_cost: other_cost,
+	                p_status: status
+                },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if(!response[0]?.success) {
+            return next(new ErrorHandler(response[0]?.message || "Failed to save other cost with sku id", 400));
+        };
+
+        res.status(200).json({
+            success: true,
+            message: response[0].message || `Other cost with sku id: ${sku_id} saved successfully`
+        });
+    
+    }catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+
+});
+
+
 const getOtherCostBySkuAndRfqid = catchAsyncError(async(req, res, next) => {
     const {rfq_id, sku_id} = req.params;
 
@@ -254,14 +302,48 @@ const editOtherCostById = catchAsyncError(async (req, res, next) => {
 
 
 
+
+const editLatestOtherCostById = catchAsyncError(async (req, res, next) => {
+    const {p_id, other_cost_id, other_cost_per_kg, other_cost} = req.body;
+
+    if(!p_id) return next(new ErrorHandler("Please provide Id", 400));
+
+    const result = await sequelize.query(
+        `SELECT * FROM update_sku_other_cost_latest(:p_id, :p_other_cost_id, :p_other_cost_per_kg, :p_other_cost)`,
+        {
+            replacements: {
+                p_id: p_id,
+                p_other_cost_id: other_cost_id,
+                p_other_cost_per_kg: other_cost_per_kg,
+                p_other_cost: other_cost
+            },
+            type: sequelize.QueryTypes.SELECT  
+        }
+    );
+
+    if(!result[0]?.success) {
+        return next(new ErrorHandler(result[0]?.message || "Failed to edit other cost", 400));
+    };
+
+    res.status(200).json({
+        success: true,
+        message: result[0].message || `Other cost edited successfully`
+    });
+
+})
+
+
+
 export { 
     saveOtherCost, 
     getOtherCost, 
     editOtherCost, 
     deleteOtherCost, 
     saveOtherCostWithSkuId, 
+    saveLatestOtherCostWithSkuId,
     getOtherCostBySkuAndRfqid,
     getLatestOtherCostBySkuAndRfqid, 
     deleteOtherCostBySkuAndRfqidOtherCostId, 
-    editOtherCostById 
+    editOtherCostById,
+    editLatestOtherCostById 
 };
